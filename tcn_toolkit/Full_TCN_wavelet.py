@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from math import *
-from Temporal_Unit import TUnit
+from .Temporal_Unit import TUnit
 
 
 class FullTCNet(nn.Module):
@@ -23,7 +23,7 @@ class FullTCNet(nn.Module):
 
         self.net = nn.Sequential(*layer_set)
 
-    def fwd_pass(self,input):
+    def forward(self,input):
         return self.net(input)
 
 
@@ -63,16 +63,16 @@ class TCN_wavelet(nn.Module):
             out_wavelet_split_1 = self.lin_wave(in_wavelet_split_1.reshape(b,-1,1).squeeze())
             out_wavelet_split_2 = self.lin_wave(in_wavelet_split_2.reshape(b,-1,1).squeeze())
 
-            input = input.permute(0,2,1)
+        input = input.permute(0,2,1)
 
-            y1 = self.tcnet(input)  #size = N,C,L
-            last_y1 = y1[:,:-1]
+        y1 = self.tcnet(input)  #size = N,C,L
+        last_y1 = y1[:,:-1]
 
-            if self.wavelet:
-                last_y1 = torch.cat([last_y1,out_wavelet_split_1,out_wavelet_split_2],dim=1)
+        if self.wavelet:
+            last_y1 = torch.cat([last_y1,out_wavelet_split_1,out_wavelet_split_2],dim=1)
 
 
-            norm = self.batch_norm_input(last_y1)
+        norm = self.batch_norm_input(last_y1)
 
-            final = self.lin_layer(norm)
-            return final,norm
+        final = self.lin_layer(norm)
+        return final,norm
