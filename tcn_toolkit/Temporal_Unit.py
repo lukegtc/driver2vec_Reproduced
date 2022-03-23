@@ -1,11 +1,26 @@
 import torch
 import torch.nn as nn
-from math import *
-from .Chomper import Chomp1d
+
+# from .Chomper import Chomp1d
+
+# Chomp1D:
+#removes excess right padding from Convolutional output https://stats.stackexchange.com/questions/403281/why-chomp-in-temporal-convolutional-network
+
+#https://github.com/locuslab/TCN/blob/master/TCN/tcn.py
+class Chomp1d(nn.Module):
+    def __init__(self, chomp_size):
+        super(Chomp1d, self).__init__()
+        self.chomp_size = chomp_size
+
+    def forward(self, input):
+        return input[:, :, :-self.chomp_size].contiguous()
+
 
 class TUnit(nn.Module):
     def __init__(self,**kwargs):
         super(TUnit, self).__init__()    
+        
+        print('check3')
 
         self.conv_layer1 = nn.utils.weight_norm(nn.Conv1d(kwargs["in_num"],kwargs["out_num"],kwargs["kernel"],kwargs["stride"],kwargs["padding"],kwargs["dilation"]))
 
@@ -32,10 +47,10 @@ class TUnit(nn.Module):
         else:
             self.downsample = None
         self.relu = nn.ReLU()
-
+        self.init_weights()
 
         #Weight Initialization
-
+    def init_weights(self):
         nn.init.kaiming_uniform_(self.conv_layer1.weight)
         nn.init.kaiming_uniform_(self.conv_layer2.weight)
 
@@ -45,6 +60,7 @@ class TUnit(nn.Module):
         #Forward Step
 
         def forward(self,input):
+            print('check3')
             output = self.net(input)
             if self.downsample == None:
                 result = input

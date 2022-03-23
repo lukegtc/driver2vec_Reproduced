@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 from math import *
-from .Temporal_Unit import TUnit
+from .Temporal_Unit import *
 
 
 class FullTCNet(nn.Module):
     def __init__(self,in_num, channel_num,kernel,dropout):
         super(FullTCNet, self).__init__()
-        layer_set = []
+        self.layer_set = []
         #Cycles through Channels
         for i in range(len(channel_num)):
             #sets number of channels equal to the output channels for this particular channel
@@ -19,11 +19,12 @@ class FullTCNet(nn.Module):
             else:
                 in_channels = channel_num[i-1]
 
-            layer_set+=[TUnit(in_num = in_channels, out_num = out_channels,kernel= kernel,stride=1,dilation = 2**i,padding = (kernel-1)*2**i,dropout = dropout)]
-
-        self.net = nn.Sequential(*layer_set)
+            self.layer_set.append(TUnit(in_num = in_channels, out_num = out_channels,kernel= kernel,stride=1,dilation = 2**i,padding = (kernel-1)*2**i,dropout = dropout))
+        self.net = nn.Sequential(*self.layer_set)
+        
 
     def forward(self,input):
+        print('check1')
         return self.net(input)
 
 
@@ -36,7 +37,7 @@ class TCN_wavelet(nn.Module):
         out_len = kwargs['out_len']
         kernel = kwargs['kernel']
         dropout = kwargs['dropout']
-        tot_channels = kwargs['tot_channels']   #Check this
+        tot_channels = kwargs['tot_channels']   #Check this list of channel names? no
         wave_out_len = kwargs['wave_out_len']
         channel_num  = [int(x) for x in tot_channels.split(',')]
         linear_size = channel_num[-1]
@@ -53,6 +54,7 @@ class TCN_wavelet(nn.Module):
 
 
     def forward(self,**kwargs):
+        print('check2')
         if self.wavelet:
             split_tensor = torch.split(kwargs['input'],self.in_num,2)
             input = split_tensor[0]
@@ -63,7 +65,7 @@ class TCN_wavelet(nn.Module):
             out_wavelet_split_1 = self.lin_wave(in_wavelet_split_1.reshape(b,-1,1).squeeze())
             out_wavelet_split_2 = self.lin_wave(in_wavelet_split_2.reshape(b,-1,1).squeeze())
 
-        input = input.permute(0,2,1)
+        input = kwargs['input'].permute(0,2,1)
 
         y1 = self.tcnet(input)  #size = N,C,L
         last_y1 = y1[:,:-1]

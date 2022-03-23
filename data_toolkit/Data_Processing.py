@@ -1,6 +1,4 @@
-from ntpath import join
 import numpy as np
-import torch.nn as nn
 import torch
 import pandas as pd
 from math import *
@@ -17,7 +15,7 @@ TERRAIN_SET = ['highway','suburban','tutorial','urban']  #Constant Terrain Set. 
 
 
 
-def dataset_open(terrain,variables = [], always_remove = ['FOG','FOG_LIGHTS','FRONT_WIPERS','HEAD_LIGHTS','RAIN','REAR_WIPERS','SNOW']):
+def dataset_open( terrain,pct_training = 0.8,variables = [], always_remove = ['FOG','FOG_LIGHTS','FRONT_WIPERS','HEAD_LIGHTS','RAIN','REAR_WIPERS','SNOW']):
     if terrain not in TERRAIN_SET:
         print("Incorrect Terrain Selected")
     else:
@@ -26,6 +24,7 @@ def dataset_open(terrain,variables = [], always_remove = ['FOG','FOG_LIGHTS','FR
         i = 1
         variables.extend(always_remove)
         print(variables)
+        
         for folder in os.listdir(DATA_DIR):
             
             USER_DIR = os.path.join(DATA_DIR,folder)
@@ -41,6 +40,7 @@ def dataset_open(terrain,variables = [], always_remove = ['FOG','FOG_LIGHTS','FR
                     else:
                         df = pd.read_csv(os.path.join(USER_DIR,file))
                     # trial_dict = {}
+                    
                     for columnName, columnData in df.iteritems():
                         # trial_dict[columnName] = torch.tensor(columnData.values)
 
@@ -48,8 +48,12 @@ def dataset_open(terrain,variables = [], always_remove = ['FOG','FOG_LIGHTS','FR
                     # user_dict[i] =trial_dict 
             tot_set.append(user_set)
             i +=1
-
-        return torch.tensor(tot_set)
+        full_tensor = torch.tensor(tot_set)
+        tot_len = full_tensor.shape[2] 
+        train_len = round(tot_len*pct_training)
+        test = round(tot_len*(1-pct_training)/2)
+        val = tot_len-train_len-test
+        return full_tensor[:,:,:train_len],full_tensor[:,:,train_len:(train_len+test)],full_tensor[:,:,(train_len+test):]
 
 
 
