@@ -67,8 +67,8 @@ class TemporalConvNet(nn.Module):
     def __init__(self, c_in, channel_lst, kernel=2, dropout=0.2):
         super(TemporalConvNet, self).__init__()
         layer_set = []
-        num_levels = len(channel_lst)
-        for i in range(num_levels):
+       
+        for i in range(len(channel_lst)):
             dilation_size = 2 ** i
             if i == 0:
                 in_channels = c_in  

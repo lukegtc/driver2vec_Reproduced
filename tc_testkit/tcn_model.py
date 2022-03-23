@@ -33,27 +33,26 @@ class TCN(nn.Module):
     def forward(self, inputs):
         """Inputs have to have dimension (N, C_in, L_in)"""
         if self.wavelet:
-            print(inputs.shape)
             # inputs = inputs.permute(0, 2, 1)
-            splits = torch.split(inputs, self.c_in, dim=2)
-            print(splits[0].shape)
+            print(self.c_in)
+            splits = torch.split(inputs, self.c_in, dim=1)
 
-            print(splits[1].shape)
             inputs = splits[0]
             wvlt_inputs = splits[1]
-            splits2 = torch.split(wvlt_inputs,self.l_in // 2,dim=1)
-            # print(splits2)
+            # print(wvlt_inputs.shape)
+            splits2 = torch.split(wvlt_inputs,self.l_in // 2,dim=2)
+            # print(len(splits2))
             wvlt_inputs_1 = splits2[0]
             wvlt_inputs_2 = splits2[1]
             bsize = inputs.size()[0]
             wvlt_out1 = self.linear_wavelet(wvlt_inputs_1.reshape(bsize, -1, 1).squeeze())
             wvlt_out2 = self.linear_wavelet(wvlt_inputs_2.reshape(bsize, -1, 1).squeeze())
-
+            print(wvlt_out1.shape)
         # inputs = inputs.permute(0, 2, 1)
         print(inputs.shape)
         y1 = self.tcn(inputs)  # input should have dimension (N, C, L)
         last = y1[:, :, -1]
-        
+        print(last.shape)
         if self.wavelet:
             last = torch.cat([last, wvlt_out1, wvlt_out2], dim=1)
 
@@ -61,6 +60,6 @@ class TCN(nn.Module):
         o = self.linear(normalized)
         # return o, {'orig': last, 'pos': None, 'neg': None}
         print(normalized.shape)
-        print(o.shape)
+        # print(o.shape)
         return o, {'orig': normalized, 'pos': None, 'neg': None}
 
