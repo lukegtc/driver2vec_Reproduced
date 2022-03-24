@@ -1,3 +1,6 @@
+NUM_DRIVERS = 5
+
+
 CHANNELS=["ACCELERATION", "ACCELERATION_PEDAL", "ACCELERATION_Y",
               "ACCELERATION_Z", "BRAKE_PEDAL", "CLUTCH_PEDAL", "CURVE_RADIUS",
               "DISTANCE", "DISTANCE_TO_NEXT_INTERSECTION",
@@ -44,3 +47,56 @@ CHANNEL_GROUPS = {
  
                 "gearbox":["GEARBOX"]
                         }
+
+
+MAX_P_WAYS = 5
+
+triplet_train_metrics = [('one_hot_accuracy', ()),
+                         ('confusion_matrix', ()),
+                         ('triplet_accuracy', ()),
+                         ('triplet_ratio', ()),
+                         ('triplet_diff_weight_ratio', ()),
+                         ('tsne', ()),
+                         ('tsne_collisions', ())]
+
+triplet_simple_eval_metrics = [('one_hot_accuracy', ()),
+                               ('confusion_matrix', ()),
+                               ('triplet_accuracy', ()),
+                               ('triplet_ratio', ()),
+                               ('triplet_diff_weight_ratio', ()),
+                               ('tsne', ()),
+                               ('tsne_collisions', ())]
+triplet_simple_eval_metrics.extend([('p_way_accuracy', (p, ))
+                                    for p in range(2, MAX_P_WAYS + 1, 1)])
+#triplet_simple_eval_metrics.extend([('area_accuracy', (p, ))
+#                                    for p in [-1, 1, 8, 9]])
+
+triplet_lgbm_eval_metrics = [('one_hot_accuracy', ()),
+                             ('confusion_matrix', ()),
+                             # Only need to do these once
+                             # ('triplet_accuracy', ()),
+                             # ('triplet_ratio', ()),
+                             # ('triplet_diff_weight_ratio', ()),
+                             # ('tsne', ()),
+                             # ('tsne_collisions', ())
+                             ]
+#triplet_lgbm_eval_metrics.extend([('per_driver_f1', (i, ))
+#                                  for i in range(NUM_DRIVERS)]) 
+triplet_lgbm_eval_metrics.extend([('p_way_accuracy', (p, ))
+                                  for p in range(2, MAX_P_WAYS + 1, 1)])
+TRIPLET_EVAL_METRICS = {'train': {'train': triplet_train_metrics},
+                        'eval': {'eval_simple': (triplet_simple_eval_metrics,
+                                                 'simple_predict'),
+                                 'eval_lgbm': (triplet_lgbm_eval_metrics,
+                                               'lgbm_predict'),
+                                 },
+                        'test': {'test_simple': (triplet_simple_eval_metrics,
+                                                 'simple_predict'),
+                                 'test_lgbm': (triplet_lgbm_eval_metrics,
+                                               'lgbm_predict')}
+                        }
+
+DATASET_EVAL_METRICS = {'divided_splitted_normalized': TRIPLET_EVAL_METRICS,
+                        'divided_splitted': TRIPLET_EVAL_METRICS,
+                        'area_2_divided_splitted': TRIPLET_EVAL_METRICS,
+                        'raw_normalized': TRIPLET_EVAL_METRICS}
