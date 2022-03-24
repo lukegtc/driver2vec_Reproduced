@@ -15,7 +15,12 @@ TERRAIN_SET = ['highway','suburban','tutorial','urban']  #Constant Terrain Set. 
 
 
 
-def dataset_open( terrain,pct_training = 0.8,variables = [], always_remove = ['FOG','FOG_LIGHTS','FRONT_WIPERS','HEAD_LIGHTS','RAIN','REAR_WIPERS','SNOW']):
+def dataset_open( terrain,
+                  add_noise=False,
+                  noise_variance=0,
+                  pct_training=0.8,
+                  variables = [],
+                  always_remove = ['FOG','FOG_LIGHTS','FRONT_WIPERS','HEAD_LIGHTS','RAIN','REAR_WIPERS','SNOW']):
     if terrain not in TERRAIN_SET:
         print("Incorrect Terrain Selected")
     else:
@@ -23,8 +28,8 @@ def dataset_open( terrain,pct_training = 0.8,variables = [], always_remove = ['F
         tot_set = []
         i = 1
         variables.extend(always_remove)
-        print(variables)
-        
+        # print(variables)
+
         for folder in os.listdir(DATA_DIR):
             
             USER_DIR = os.path.join(DATA_DIR,folder)
@@ -48,18 +53,21 @@ def dataset_open( terrain,pct_training = 0.8,variables = [], always_remove = ['F
                     # user_dict[i] =trial_dict 
             tot_set.append(user_set)
             i +=1
+
         full_tensor = torch.tensor(tot_set)
-        tot_len = full_tensor.shape[2] 
-        train_len = round(tot_len*pct_training)
-        test = round(tot_len*(1-pct_training)/2)
-        val = tot_len-train_len-test
-        return full_tensor[:,:,:train_len],full_tensor[:,:,train_len:(train_len+test)],full_tensor[:,:,(train_len+test):]
+        tot_len = full_tensor.shape[2]
+        train_len = round(tot_len * pct_training)
+        test_len = round(tot_len * (1 - pct_training) / 2)
+        eval_len = tot_len - train_len - test_len
 
+        train_tensor = full_tensor[:,:,:train_len]
+        eval_tensor  = full_tensor[:,:,train_len:(train_len+test_len)]
+        test_tensor  = full_tensor[:,:,(train_len+test_len):]
 
+        if add_noise:
+            train_tensor += noise_variance * torch.randn(train_tensor.shape[0], train_tensor.shape[1], train_tensor.shape[2])
+            print(noise_variance*torch.randn(train_tensor.shape[0], train_tensor.shape[1], train_tensor.shape[2])[0, 0, :10])
 
-
-
-
-
+        return train_tensor, eval_tensor, test_tensor
 
 
