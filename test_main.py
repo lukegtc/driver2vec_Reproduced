@@ -3,6 +3,7 @@ from torch import nn
 
 
 from data_toolkit import *
+from model_toolkit import *
 from tcn_toolkit import *
 from constants import *
 from tc_testkit import *
@@ -17,12 +18,19 @@ fast_debug = False
 clipping_value = 1.0
 batch_size = 384
 setting = 'test' #train or test
-training_tensor,eval_tensor,testing_tensor = Data_Processing.dataset_open('highway')
+training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=True, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
 # print(training_tensor.shape)
 # print(eval_tensor.shape)
 # print(testing_tensor.shape)
 len_set = [32 for x in training_tensor]
+
+# Fully connected layers
+in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
+input_channels = training_tensor.size(dim=1)
+fc_test = FCN(in_features=in_features, input_channels=input_channels, hidden_dim=256, out_features=15)
+fc_test.forward(training_tensor)
+
 # print(len_set)
 # test_net = Full_TCN_wavelet.FullTCNet(31,len_set,7,0.1)
 # test_wavelet = TCN_wavelet(in_num = 31 ,wavelet = False,in_len = 1000,out_len = 5,kernel = 7,dropout=0.1,tot_channels='25,25,25,25,25,25,25,25',wave_out_len= 15) #Fix based on kwargs list in the FTCN module
