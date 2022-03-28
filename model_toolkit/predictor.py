@@ -130,25 +130,25 @@ class Predictor(object):
             # self.logger.log_data(train_emb, f'train_embeddings_latest')
             # self.logger.log_data(train_gt, f'train_ground_truth_latest')
     
-    def named_predict(self, loader_name, other_loader, pred_name):
-        func_name = '_' + pred_name
-        return getattr(self, func_name)(other_loader, loader_name)
+    # def named_predict(self, loader_name, other_loader, pred_name):
+    #     func_name = '_' + pred_name
+    #     return getattr(self, func_name)(other_loader, loader_name)
 
-    def _simple_predict(self, other_loader, loader_name, 
-                              save_simple_predict=True):
-        other_out, other_gt, other_info = self._predict(other_loader)
-# TODO: Create a Saver that doesnt use the logger function in the og script
-        # if save_simple_predict:
-        #     self.logger.log_data(other_info,
-        #                          f'eval_{loader_name}_embeddings_latest')
-        #     self.logger.log_data(other_gt,
-        #                          f'eval_{loader_name}_ground_truth_latest')
+#     def _simple_predict(self, other_loader, loader_name, 
+#                               save_simple_predict=True):
+#         other_out, other_gt, other_info = self._predict(other_loader)
+# # TODO: Create a Saver that doesnt use the logger function in the og script
+#         # if save_simple_predict:
+#         #     self.logger.log_data(other_info,
+#         #                          f'eval_{loader_name}_embeddings_latest')
+#         #     self.logger.log_data(other_gt,
+#         #                          f'eval_{loader_name}_ground_truth_latest')
 
-        return {'predictions': other_out,
-                'ground_truth': other_gt,
-                'other_info': other_info}
+#         return {'predictions': other_out,
+#                 'ground_truth': other_gt,
+#                 'other_info': other_info}
 
-    def _lgbm_predict(self, other_loader, loader_name,
+    def lgbm_predict(self, other_loader, loader_name,
                             save_simple_predict=True):
         other_out, other_gt, other_info = self._predict(other_loader)
         train_out, train_gt, train_emb = self.train_results

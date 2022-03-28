@@ -24,7 +24,7 @@ training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],e
 # print(eval_tensor.shape)
 # print(testing_tensor.shape)
 len_set = [32 for x in training_tensor]
-
+scoring = 0
 # Fully connected layers
 in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
 input_channels = training_tensor.size(dim=1)
@@ -49,7 +49,7 @@ model = TCN(c_in = 31,wavelet = True, l_in = 800,  out_n = tot_drivers, kernel =
 
 evaluator1 = Evaluator('cuda',100,False,1.0,'triplet',0.5 )
 
-eval_metrics = DATASET_EVAL_METRICS['divided_splitted_normalized']
+eval_metrics = TRIPLET_EVAL_METRICS
 
 predictor1 = Predictor(model, 'cuda', False)
 
@@ -63,17 +63,13 @@ def do_test():
         cur_step = optimizer1.total_step
 
         predictor1.start_prediction(training_tensor)
-        for loader_name in eval_metrics['test']:
-            # TODO: CHANGE
-            predictor_out = predictor1.named_predict(
-                loader_name,
-                data_loaders['test'][loader_name],
-                eval_metrics['test'][loader_name][1]
-            )
-            # TODO: CHANGE
-            test_result = evaluator1.evaluate(loader_name,optimizer1,predictor_out,eval_metrics['test'][loader_name][0])
-            scalar_results, image_results = test_result
-            print(scalar_results)
+        loader_name = 'test_lgbm'
+        data_loaders = testing_tensor
+        # TODO: CHANGE
+        predictor_out = predictor1.named_predict(loader_name,data_loaders,'lgbm_predict')  #Returns attributes of predictor and data_loader
+        # TODO: CHANGE
+        scalar_results, image_results = evaluator1.evaluate(loader_name,optimizer1,predictor_out,eval_metrics['test'][loader_name][0])
+        print(scalar_results)
     else:
         print('Test skipped')
 
@@ -83,7 +79,7 @@ if setting == 'train':
 
     while not optimizer1.completed():
             # TODO: CHANGE
-        for features, pos_features, neg_features, target, data_info in data_loaders['train']['train']:
+        for features, pos_features, neg_features, target, data_info in training_tensor:
 
             # TODO Fix this by getting the right loss function rather than
             # skipping the ones with incorrect shape
@@ -118,21 +114,20 @@ if setting == 'train':
 
                 cur_step = optimizer1.total_step
 #TODO: FIX
-                predictor1.start_prediction(data_loaders['train']['train'])
-                for loader_name in eval_metrics['eval']:
-                    #TODO: FIX
-                    predictor_out = predictor1.named_predict(
-                        loader_name,
-                        data_loaders['eval'][loader_name],
-                        eval_metrics['eval'][loader_name][1]
-                    )
+                predictor1.start_prediction(training_tensor)
+
+                #TODO: FIX
+                predictor_out = predictor1.lgbm_predict(
+                    testing_tensor,
+                    'lgbm_predict'
+                )
 #TODO: FIX
-                    eval_result = evaluator1.evaluate(
-                        loader_name,
-                        optimizer1,
-                        predictor_out,
-                        eval_metrics['eval'][loader_name][0])
-                    scalar_results, image_results = eval_result
+                eval_result = evaluator1.evaluate(
+                    'test_lgbm',
+                    optimizer1,
+                    predictor_out,
+                    scoring)
+                scalar_results, image_results = eval_result
             
             if (fast_debug or (optimizer1.total_step % save_steps == 0)):
                 print({'save:steps': f'Training progress saved at '
