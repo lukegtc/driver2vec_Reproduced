@@ -30,7 +30,7 @@ class TCN(nn.Module):
         self.linear = nn.Linear(linear_size, out_n)
         
 
-    def forward(self, inputs,positive,negative):
+    def forward(self, inputs):  #,positive,negative
         """Inputs have to have dimension (N, C_in, L_in)"""
         if self.wavelet:
             # inputs = inputs.permute(0, 2, 1)
@@ -44,23 +44,23 @@ class TCN(nn.Module):
             # print(len(splits2))
             wvlt_inputs_1 = splits2[0]
             wvlt_inputs_2 = splits2[1]
-            print(wvlt_inputs_1.shape)
+            # print(wvlt_inputs_1.shape)
             bsize = inputs.size()[0]
             wvlt_out1 = self.linear_wavelet(wvlt_inputs_1.reshape(bsize, -1, 1).squeeze())
             wvlt_out2 = self.linear_wavelet(wvlt_inputs_2.reshape(bsize, -1, 1).squeeze())
-            print(wvlt_out1.shape)
+            # print(wvlt_out1.shape)
         # inputs = inputs.permute(0, 2, 1)
-        print(inputs.shape)
+        # print(inputs.shape)
         y1 = self.tcn(inputs)  # input should have dimension (N, C, L)
         last = y1[:, :, -1]
-        print(last.shape)
+        # print(last.shape)
         if self.wavelet:
             last = torch.cat([last, wvlt_out1, wvlt_out2], dim=1)
 
         normalized = self.input_bn(last)
         o = self.linear(normalized)
         # return o, {'orig': last, 'pos': None, 'neg': None}
-        print(normalized.shape)
+        # print(normalized.shape)
         # print(o.shape)
-        return o, {'orig': normalized, 'pos': positive, 'neg': negative}
+        return normalized #, {'orig': normalized, 'pos': positive, 'neg': negative}
 

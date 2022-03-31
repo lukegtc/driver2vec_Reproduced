@@ -59,29 +59,12 @@ triplet_train_metrics = [('one_hot_accuracy', ()),
                          ('tsne', ()),
                          ('tsne_collisions', ())]
 
-# triplet_simple_eval_metrics = [('one_hot_accuracy', ()),
-#                                ('confusion_matrix', ()),
-#                                ('triplet_accuracy', ()),
-#                                ('triplet_ratio', ()),
-#                                ('triplet_diff_weight_ratio', ()),
-#                                ('tsne', ()),
-#                                ('tsne_collisions', ())]
-# triplet_simple_eval_metrics.extend([('p_way_accuracy', (p, ))
-#                                     for p in range(2, MAX_P_WAYS + 1, 1)])
-#triplet_simple_eval_metrics.extend([('area_accuracy', (p, ))
-#                                    for p in [-1, 1, 8, 9]])
 
 triplet_lgbm_eval_metrics = [('one_hot_accuracy', ()),
                              ('confusion_matrix', ()),
-                             # Only need to do these once
-                             # ('triplet_accuracy', ()),
-                             # ('triplet_ratio', ()),
-                             # ('triplet_diff_weight_ratio', ()),
-                             # ('tsne', ()),
-                             # ('tsne_collisions', ())
+
                              ]
-#triplet_lgbm_eval_metrics.extend([('per_driver_f1', (i, ))
-#                                  for i in range(NUM_DRIVERS)]) 
+
 triplet_lgbm_eval_metrics.extend([('p_way_accuracy', (p, ))
                                   for p in range(2, MAX_P_WAYS + 1, 1)])
 TRIPLET_EVAL_METRICS = {'train': {'train': triplet_train_metrics},
