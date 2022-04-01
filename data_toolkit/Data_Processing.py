@@ -3,15 +3,17 @@ import torch
 import pandas as pd
 from math import *
 import os
-
-
+from torch.utils.data import Dataset
+from constants import *
+from collections import defaultdict
+from utils import *
 cwd = os.getcwd()
 
 DATA_DIR = os.path.join(cwd,'Reproduction_Data')  #Insert name of datapath here
 
 #Select terrain a single terrain, and train
 #Variable set is removed from the original data set so tbale 5 can be replicated
-TERRAIN_SET = ['highway','suburban','tutorial','urban']  #Constant Terrain Set. Change if variables are added
+ #Constant Terrain Set. Change if variables are added
 
 
 
@@ -98,3 +100,16 @@ def dataset_split(dataset,interval,t_len):
     return torch.Tensor(new_set)
 
 
+class Driver_Dataset(Dataset):
+    def __init__(self,dataset):
+        super(Driver_Dataset, self).__init__()
+        self.old_dataset = dataset  #Tensor
+        self.new_dataset = defaultdict(dict)
+    def dataset_generator(self):
+        for i in range(NUM_DRIVERS):
+            for j in TERRAIN_SET:
+                training,eval,test = dataset_open(j)
+                self.new_dataset['training'].append({'driver_index': i,'terrain/area':j, 'data': training})
+                self.new_dataset['eval'].append({'driver_index': i,'terrain/area':j, 'data': eval})
+                self.new_dataset['test'].append({'driver_index': i,'terrain/area':j, 'data': test})
+        return self.new_dataset
