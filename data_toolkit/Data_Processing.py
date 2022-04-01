@@ -72,19 +72,29 @@ def dataset_open( terrain,
 
 def dataset_split(dataset,interval,t_len):
     
+    dataset = dataset.numpy()
     print(dataset.shape)
     #interval is the amount of time between the starting points of each sample
     new_set = []
     for driver in dataset:
+        # print(driver.shape)
         new_driver_set = []
         for channel in driver:
+            # print(channel.shape)
             x = 0
-            if t_len*100 <= len(channel):
-                new_driver_set.append(channel[interval*x:t_len*100])
-            else:
-                continue
-            x+=1
-    
-    return new_set
+            new_channel_set = []
+            while True:
+                if t_len*100+interval*x <= len(channel):
+   
+                    new_channel_set.append(channel[interval*x:t_len*100+interval*x])
+                else:
+                    break
+                x+=1
+            new_driver_set.append(new_channel_set)
+        new_set.append(new_driver_set)
+    new_set = np.array(new_set)
+    # print(new_set)
+
+    return torch.Tensor(new_set)
 
 

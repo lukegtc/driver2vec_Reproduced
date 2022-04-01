@@ -35,12 +35,12 @@ class TCN(nn.Module):
         if self.wavelet:
             # inputs = inputs.permute(0, 2, 1)
             # print(self.c_in)
-            splits = torch.split(inputs, self.c_in, dim=1)
+            splits = torch.split(inputs, self.c_in, dim=2)
 
             inputs = splits[0]
             wvlt_inputs = splits[1]
             # print(wvlt_inputs.shape)
-            splits2 = torch.split(wvlt_inputs,self.l_in // 2,dim=2)
+            splits2 = torch.split(wvlt_inputs,self.l_in // 2,dim=1)
             # print(len(splits2))
             wvlt_inputs_1 = splits2[0]
             wvlt_inputs_2 = splits2[1]
@@ -49,7 +49,7 @@ class TCN(nn.Module):
             wvlt_out1 = self.linear_wavelet(wvlt_inputs_1.reshape(bsize, -1, 1).squeeze())
             wvlt_out2 = self.linear_wavelet(wvlt_inputs_2.reshape(bsize, -1, 1).squeeze())
             # print(wvlt_out1.shape)
-        # inputs = inputs.permute(0, 2, 1)
+        inputs = inputs.permute(0, 2, 1)
         # print(inputs.shape)
         y1 = self.tcn(inputs)  # input should have dimension (N, C, L)
         last = y1[:, :, -1]

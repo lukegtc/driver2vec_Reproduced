@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-
+import numpy as np
 
 from data_toolkit import *
 from model_toolkit import *
@@ -20,13 +20,12 @@ batch_size = 384
 setting = 'test' #train or test
 training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=True, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
-
-test  = dataset_split(training_tensor,20,100)
-print(np.shape(test))
+test  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
+print(test.shape)
 # print(training_tensor.shape)
 # print(eval_tensor.shape)
 # print(testing_tensor.shape)
-len_set = [32 for x in training_tensor]
+len_set = [31 for x in training_tensor]
 scoring = 0
 # Fully connected layers
 # in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
@@ -38,12 +37,13 @@ scoring = 0
 # test_net = Full_TCN_wavelet.FullTCNet(31,len_set,7,0.1)
 # test_wavelet = TCN_wavelet(in_num = 31 ,wavelet = False,in_len = 1000,out_len = 5,kernel = 7,dropout=0.1,tot_channels='25,25,25,25,25,25,25,25',wave_out_len= 15) #Fix based on kwargs list in the FTCN module
 
-# # print(test_wavelet.forward(input = input_tensor))
+# print(test_wavelet.forward(input = input_tensor))
 # print('testing')
 # unit_test = TUnit(in_num = 31,out_num = 31,kernel =7,stride = 1,dilation = 1,padding = 6,dropout = 0.1)
 # print('testing')
 # print(unit_test.forward(input_tensor))
 model = TCN(c_in = 31,wavelet = True, l_in = 800,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
+training_tensor = training_tensor.permute(0, 2, 1)
 print(model.forward(training_tensor.float()).shape)
 
 
