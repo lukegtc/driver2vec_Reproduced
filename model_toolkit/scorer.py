@@ -7,8 +7,8 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 import torch.nn.functional as F
-from sklearn.metrics import f1_score
-from sklearn.metrics import confusion_matrix as skcm
+# from sklearn.metrics import f1_score
+# from sklearn.metrics import confusion_matrix as skcm
 
 # from utils import *
 # from logger import Logger
