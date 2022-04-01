@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 import numpy as np
+from torch.utils.data import DataLoader
+
 
 from data_toolkit import *
 from model_toolkit import *
@@ -12,11 +14,13 @@ tot_drivers = 5
 pct_training = 0.8
 device = 'cuda'
 do_eval = True
+workers = 4
 save_steps = 800
+input_length = 100
 eval_steps = 400
 fast_debug = False
 clipping_value = 1.0
-batch_size = 384
+batch_size = 100  #384
 setting = 'test' #train or test
 training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=True, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
@@ -42,9 +46,9 @@ scoring = 0
 # unit_test = TUnit(in_num = 31,out_num = 31,kernel =7,stride = 1,dilation = 1,padding = 6,dropout = 0.1)
 # print('testing')
 # print(unit_test.forward(input_tensor))
-model = TCN(c_in = 31,wavelet = True, l_in = 800,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
+model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
 training_tensor = training_tensor.permute(0, 2, 1)
-print(model.forward(training_tensor.float()).shape)
+# print(model.forward(training_tensor.float()).shape)
 
 
 #TODO: column selector
@@ -82,7 +86,7 @@ if setting == 'train':
 
     while not optimizer1.completed():
             # TODO: CHANGE
-        for features, pos_features, neg_features, target, data_info in training_tensor:
+        for features, pos_features, neg_features, target, data_info in DataLoader(dataset=training_tensor.permute(0,2,1),batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers):
 
             # TODO Fix this by getting the right loss function rather than
             # skipping the ones with incorrect shape

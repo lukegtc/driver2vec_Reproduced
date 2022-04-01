@@ -30,7 +30,7 @@ class TCN(nn.Module):
         self.linear = nn.Linear(linear_size, out_n)
         
 
-    def forward(self, inputs):  #,positive,negative
+    def forward(self, inputs,positive,negative):  #,positive,negative
         """Inputs have to have dimension (N, C_in, L_in)"""
         if self.wavelet:
             # inputs = inputs.permute(0, 2, 1)
@@ -62,5 +62,5 @@ class TCN(nn.Module):
         # return o, {'orig': last, 'pos': None, 'neg': None}
         # print(normalized.shape)
         # print(o.shape)
-        return normalized #, {'orig': normalized, 'pos': positive, 'neg': negative}
+        return normalized, {'orig': normalized, 'pos': positive, 'neg': negative}
 
