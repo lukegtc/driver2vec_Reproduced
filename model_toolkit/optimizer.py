@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn
 
-from constants import *
+from utils import *
 
 
 class Optimizer():

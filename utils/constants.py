@@ -51,7 +51,7 @@ CHANNEL_GROUPS = {
 
 MAX_P_WAYS = 5
 
-TERRAIN_SET = ['highway','suburban','tutorial','urban'] 
+TERRAIN_SET = ['highway','suburban','urban'] #tutroial removed
 
 
 triplet_train_metrics = [('one_hot_accuracy', ()),

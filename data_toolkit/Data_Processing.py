@@ -4,7 +4,6 @@ import pandas as pd
 from math import *
 import os
 from torch.utils.data import Dataset
-from constants import *
 from collections import defaultdict
 from utils import *
 cwd = os.getcwd()
@@ -45,6 +44,7 @@ def dataset_open( terrain,
                         df = df.iloc[:,1:]
                         df = df.loc[:,~df.columns.isin(variables)]
                     else:
+                        
                         df = pd.read_csv(os.path.join(USER_DIR,file))
                     # trial_dict = {}
                     
@@ -53,9 +53,10 @@ def dataset_open( terrain,
 
                         user_set.append(np.array(columnData))
                     # user_dict[i] =trial_dict 
+
             tot_set.append(user_set)
             i +=1
-
+        
         full_tensor = torch.tensor(tot_set)
         tot_len = full_tensor.shape[2]
         train_len = round(tot_len * pct_training)
@@ -68,14 +69,14 @@ def dataset_open( terrain,
 
         if add_noise:
             train_tensor += noise_variance * torch.randn(train_tensor.shape[0], train_tensor.shape[1], train_tensor.shape[2])
-            print(noise_variance*torch.randn(train_tensor.shape[0], train_tensor.shape[1], train_tensor.shape[2])[0, 0, :10])
+            # print(noise_variance*torch.randn(train_tensor.shape[0], train_tensor.shape[1], train_tensor.shape[2])[0, 0, :10])
 
         return train_tensor, eval_tensor, test_tensor
 
 def dataset_split(dataset,interval,t_len):
     
     dataset = dataset.numpy()
-    print(dataset.shape)
+    # print(dataset.shape)
     #interval is the amount of time between the starting points of each sample
     new_set = []
     for driver in dataset:
@@ -100,16 +101,47 @@ def dataset_split(dataset,interval,t_len):
     return torch.Tensor(new_set)
 
 
-class Driver_Dataset(Dataset):
-    def __init__(self,dataset):
-        super(Driver_Dataset, self).__init__()
+class Driver_Dataset():
+    def __init__(self,dataset,interval = 20,t_len = 1):
+        # super(Driver_Dataset, self).__init__()
         self.old_dataset = dataset  #Tensor
-        self.new_dataset = defaultdict(dict)
+        self.interval = interval
+        self.t_len = t_len
+        self.new_dataset = {}
+
+        #Generate the dataset
+        self.dataset = self.dataset_generator()
     def dataset_generator(self):
+
+        #Middle loop for drivers
         for i in range(NUM_DRIVERS):
+
+            #For looping through the terrains
             for j in TERRAIN_SET:
+                #Open dataset based on terrain
                 training,eval,test = dataset_open(j)
-                self.new_dataset['training'].append({'driver_index': i,'terrain/area':j, 'data': training})
-                self.new_dataset['eval'].append({'driver_index': i,'terrain/area':j, 'data': eval})
-                self.new_dataset['test'].append({'driver_index': i,'terrain/area':j, 'data': test})
+                #split dataset
+                original = dataset_split(training,self.interval,self.t_len)
+                #positive is just the one driver you want to evaluate
+                positive = original[i,:,:,:]
+                #Negative is ALL other drivers
+                negative = torch.Tensor(original.numpy()[np.arange(len(original.numpy()))!=i])
+                #Target is the index of the driver, nothing special
+                target = i
+                #To be filled in
+                #TODO: Fill this in
+                data_info = {}
+                self.new_dataset[f'{i}_{j}']=([original,positive,negative,
+                                                dataset_split(eval,self.interval,self.t_len),
+                                                dataset_split(test,self.interval,self.t_len),target,data_info])
         return self.new_dataset
+
+    # def segment_selection(self, index,terrain):
+    #     for i in range(NUM_DRIVERS):
+    #         for j in TERRAIN_SET:
+
+        
+
+        # for set in self.dataset:
+
+

@@ -1,8 +1,7 @@
 import itertools
 import numpy as np
-from scipy.special import comb
 
-from constants import MAX_P_WAYS, NUM_DRIVERS
+from .constants import MAX_P_WAYS, NUM_DRIVERS
 
     
 SAMPLE_SIZE = 1000

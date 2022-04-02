@@ -7,12 +7,12 @@ from torch.utils.data import DataLoader
 from data_toolkit import *
 from model_toolkit import *
 from tcn_toolkit import *
-from constants import *
+from utils import *
 from tc_testkit import *
 from model_toolkit import *
 tot_drivers = 5
 pct_training = 0.8
-device = 'cuda'
+device = 'cpu'
 do_eval = True
 workers = 4
 save_steps = 800
@@ -22,7 +22,7 @@ fast_debug = False
 clipping_value = 1.0
 batch_size = 36  #384
 setting = 'train' #train or test
-training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=True, noise_variance=0.1)
+training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=False, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
 training_tensor  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
 
@@ -32,8 +32,9 @@ training_tensor  = dataset_split(training_tensor,20,1) #Splits any tensor into s
 len_set = [31 for x in training_tensor]
 scoring = 0
 
-for i in training_tensor
-
+test_ds = dataset_open('highway')
+test_ds = Driver_Dataset(test_ds)
+print(test_ds.dataset)
 # Fully connected layers
 # in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
 # input_channels = training_tensor.size(dim=1)
@@ -64,9 +65,9 @@ model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers,
 # predictor1 = Predictor(model, 'cuda', False)
 
 # optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,384,10,100)
-test1 = DataLoader(dataset=training_tensor[0,:,0,:],batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers)
-for i in test1:
-    print(i)
+# test1 = DataLoader(dataset=training_tensor[0,:,0,:],batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers)
+# for i in test1:
+#     print(i)
 
 # def do_test():
         
