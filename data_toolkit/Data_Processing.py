@@ -130,10 +130,10 @@ class Driver_Dataset():
                 target = i
                 #To be filled in
                 #TODO: Fill this in
-                data_info = {}
+                data_info = {'mask':0, 'other_gt':[np.arange(len(original.numpy()))!=i]}
                 self.new_dataset[f'{i}_{j}']=([original,positive,negative,
                                                 dataset_split(eval,self.interval,self.t_len),
-                                                dataset_split(test,self.interval,self.t_len),target,data_info])
+                                                dataset_split(test,self.interval,self.t_len),np.array(target),data_info])
         return self.new_dataset
 
     # def segment_selection(self, index,terrain):
