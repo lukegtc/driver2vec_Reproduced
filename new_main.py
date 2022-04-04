@@ -5,7 +5,7 @@ from torch import nn
 from data_toolkit import *
 from model_toolkit import *
 from tcn_toolkit import *
-from constants import *
+from utils import *
 from tc_testkit import *
 from model_toolkit import *
 
@@ -17,8 +17,8 @@ save_steps = 800
 eval_steps = 400
 fast_debug = False
 clipping_value = 1.0
-batch_size = 384
-setting = 'test' #train or test
+batch_size = 100
+setting = 'train' #train or test
 training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=True, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
 training_set  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
@@ -35,14 +35,17 @@ predictor1 = Predictor(model, 'cuda', False)
 #initialize evaluator/scorer
 evaluator1 = Evaluator('cuda',100,False,1.0,'triplet',0.5 )
 #initialize optimizer
-optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,384,10,100)
+optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,batch_size,10,100)
 
+
+tot_ds = dataset_open('highway')
+tot_ds = Driver_Dataset(tot_ds)
 
 if setting == 'test':
     # The following should be the same as for normal evaluation
     cur_step = optimizer1.total_step
 
-    predictor1.start_prediction(training_tensor)
+    predictor1.start_prediction(tot_ds.dataset_generator())
     loader_name = 'test_lgbm'
     data_loaders = testing_tensor
     # TODO: CHANGE
@@ -58,3 +61,16 @@ else:
 
 if setting == 'train':
     model.train()
+
+    while not optimizer1.completed():
+
+        for original, positive, negative, target, data_info in tot_ds.dataset_generator():
+            
+            print(original.shape,positive.shape,negative.shape,target.shape)
+
+            if len(original) == batch_size:
+                original = original.to(device)
+                target = target.to(device)
+
+                with torch.set_grad_enabled(True):
+                    print('hello')

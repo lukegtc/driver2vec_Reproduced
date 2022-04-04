@@ -64,14 +64,14 @@ class Predictor(object):
         self.lgb_num_rounds = 15
 
     def _predict(self, loader, ratio=1, need_triplet_emb=True):
-
+        
         self.model.eval()
 
         outputs = []
         ground_truth = []
         other_info = defaultdict(list)
         debug_counter = 0
-        with tqdm(total=len(loader.dataset)) as progress_bar:
+        with tqdm(total=len(loader)) as progress_bar:
             for orig_features, pos_features, neg_features, targets, data_info \
                 in loader:
 
@@ -114,7 +114,7 @@ class Predictor(object):
     def start_prediction(self, train_loader,
                          save_train_emb=True):
         # TODO Let's say, we want no more than 10K input for LightGBM
-        data_count = len(train_loader.dataset)
+        data_count = len(train_loader)
         NUM_ALLOWED = 20000.0
         if data_count > NUM_ALLOWED:
             ratio = NUM_ALLOWED / data_count

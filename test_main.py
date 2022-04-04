@@ -80,7 +80,7 @@ def do_test():
         loader_name = 'test_lgbm'
         data_loaders = testing_tensor
         # TODO: CHANGE
-        predictor_out = predictor1.named_predict(loader_name,data_loaders,'lgbm_predict')  #Returns attributes of predictor and data_loader
+        predictor_out = predictor1.lgbm_predict(loader_name,data_loaders,'lgbm_predict')  #Returns attributes of predictor and data_loader
         # TODO: CHANGE
         scalar_results, image_results = evaluator1.evaluate(loader_name,optimizer1,predictor_out,eval_metrics['test'][loader_name][0])
         print(scalar_results)

@@ -110,7 +110,6 @@ class Driver_Dataset():
         self.new_dataset = {}
 
         #Generate the dataset
-        self.dataset = self.dataset_generator()
     def dataset_generator(self):
 
         #Middle loop for drivers
@@ -120,6 +119,9 @@ class Driver_Dataset():
             for j in TERRAIN_SET:
                 #Open dataset based on terrain
                 training,eval,test = dataset_open(j)
+
+                
+
                 #split dataset
                 original = dataset_split(training,self.interval,self.t_len)
                 #positive is just the one driver you want to evaluate
@@ -134,14 +136,7 @@ class Driver_Dataset():
                 self.new_dataset[f'{i}_{j}']=([original,positive,negative,
                                                 dataset_split(eval,self.interval,self.t_len),
                                                 dataset_split(test,self.interval,self.t_len),np.array(target),data_info])
-        return self.new_dataset
+        return original,positive,negative,target,data_info
 
-    # def segment_selection(self, index,terrain):
-    #     for i in range(NUM_DRIVERS):
-    #         for j in TERRAIN_SET:
-
-        
-
-        # for set in self.dataset:
 
 
