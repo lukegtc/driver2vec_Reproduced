@@ -112,14 +112,15 @@ class Driver_Dataset():
 
 
     def dataset_generator(self):
-        total_set = {}
+        terrain_set = {}
         for j in TERRAIN_SET:
-                terrain_set = {}
+                driver_set = {}
                 for i in range(NUM_DRIVERS):
-                    driver_set = {}
+                    single_driver_set = {}
                     #Open dataset based on terrain
                     training,eval,test = dataset_open(j)
-                    original = dataset_split(training,self.interval,self.t_len)                
+                    original = dataset_split(training,self.interval,self.t_len) 
+                                   
                     #positive is just the one driver you want to evaluate
                     positive = original[i,:,:,:]
                     #Negative is ALL other drivers
@@ -127,16 +128,15 @@ class Driver_Dataset():
                     #Target is the index of the driver, nothing special
                     target = i
                     data_info = {'mask':0, 'other_gt':[np.arange(len(original.numpy()))!=i]}
-                    
+                    driver_segments = []
                     for k in range(original.shape[2]):
-                        driver_set['original'] = original[:,:,k,:]
-                        driver_set['positive'] = positive[:,k,:]
-                        driver_set['negative'] = negative[:,:,k,:]
-                        driver_set['target'] = target
-                        driver_set['data info'] = data_info
+                        driver_segments.append([original[:,:,k,:],positive[:,k,:],negative[:,:,k,:],target,data_info])
+           
+                    single_driver_set['training'] = driver_segments
+                    single_driver_set['eval'] = eval
+                    single_driver_set['test'] = test
+                    driver_set[i] = single_driver_set
+                terrain_set[j] = driver_set
 
-                    terrain_set[i] = driver_set
-                total_set[j] = terrain_set
-
-        return total_set
+        return terrain_set
         
