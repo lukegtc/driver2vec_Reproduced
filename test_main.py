@@ -37,8 +37,13 @@ scoring = 0
 tot_ds = Driver_Dataset()
 dataset = tot_ds.dataset_generator()
 # print(tot_ds.dataset_generator())
-print(dataset['urban'][0]['original'].shape)
-print(dataset['highway'][0]['original'].shape)
+
+print(len(dataset['highway'][0]['training']))
+
+
+original,pos,neg,target, data_info = dataset['highway'][0]['training'][0]
+
+
 # print(test_ds.dataset)
 # Fully connected layers
 # in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
@@ -96,7 +101,7 @@ if setting == 'train':
 
     while not optimizer1.completed():
 
-        for original, positive, negative, target, data_info in tot_ds.dataset:
+        for original, positive, negative, target, data_info in dataset['highway'][0]['training']:
 
             # TODO: ADD another for loop since it should be done by segment (1 segment is 100 datapoints long)
             original = gen_wavelet(np.array(original,dtype=np.float32))
