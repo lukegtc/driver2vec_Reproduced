@@ -26,15 +26,19 @@ training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('hig
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
 
 training_tensor  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
-
+print(training_tensor.shape)
 # print(training_tensor.shape)
 # print(eval_tensor.shape)
 # print(testing_tensor.shape)
 len_set = [31 for x in training_tensor]
 scoring = 0
 
-tot_ds = dataset_open('highway')
-tot_ds = Driver_Dataset(tot_ds)
+
+tot_ds = Driver_Dataset()
+dataset = tot_ds.dataset_generator()
+# print(tot_ds.dataset_generator())
+print(dataset['urban'][0]['original'].shape)
+print(dataset['highway'][0]['original'].shape)
 # print(test_ds.dataset)
 # Fully connected layers
 # in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
@@ -67,8 +71,7 @@ predictor1 = Predictor(model, 'cuda', False)
 
 optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,384,10,100)
 test1 = DataLoader(dataset=training_tensor[0,:,0,:],batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers)
-for i in test1:
-    print(i)
+
 
 def do_test():
         
@@ -97,7 +100,7 @@ if setting == 'train':
 
             # TODO: ADD another for loop since it should be done by segment (1 segment is 100 datapoints long)
             original = gen_wavelet(np.array(original,dtype=np.float32))
-            posiitve = gen_wavelet(np.array(positive,dtype=np.float32))
+            positive = gen_wavelet(np.array(positive,dtype=np.float32))
             negative = gen_wavelet(np.array(negative,dtype=np.float32))
             # TODO Fix this by getting the right loss function rather than
             # skipping the ones with incorrect shape

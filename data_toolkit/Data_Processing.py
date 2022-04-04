@@ -102,41 +102,41 @@ def dataset_split(dataset,interval,t_len):
 
 
 class Driver_Dataset():
-    def __init__(self,dataset,interval = 20,t_len = 1):
+    def __init__(self,interval = 20,t_len = 1):
         # super(Driver_Dataset, self).__init__()
-        self.old_dataset = dataset  #Tensor
+          #Tensor
         self.interval = interval
         self.t_len = t_len
         self.new_dataset = {}
 
-        #Generate the dataset
+
+
     def dataset_generator(self):
+        total_set = {}
+        for j in TERRAIN_SET:
+                terrain_set = {}
+                for i in range(NUM_DRIVERS):
+                    driver_set = {}
+                    #Open dataset based on terrain
+                    training,eval,test = dataset_open(j)
+                    original = dataset_split(training,self.interval,self.t_len)                
+                    #positive is just the one driver you want to evaluate
+                    positive = original[i,:,:,:]
+                    #Negative is ALL other drivers
+                    negative = torch.Tensor(original.numpy()[np.arange(len(original.numpy()))!=i])
+                    #Target is the index of the driver, nothing special
+                    target = i
+                    data_info = {'mask':0, 'other_gt':[np.arange(len(original.numpy()))!=i]}
+                    
+                    for k in range(original.shape[2]):
+                        driver_set['original'] = original[:,:,k,:]
+                        driver_set['positive'] = positive[:,k,:]
+                        driver_set['negative'] = negative[:,:,k,:]
+                        driver_set['target'] = target
+                        driver_set['data info'] = data_info
 
-        #Middle loop for drivers
-        for i in range(NUM_DRIVERS):
+                    terrain_set[i] = driver_set
+                total_set[j] = terrain_set
 
-            #For looping through the terrains
-            for j in TERRAIN_SET:
-                #Open dataset based on terrain
-                training,eval,test = dataset_open(j)
-
-                
-
-                #split dataset
-                original = dataset_split(training,self.interval,self.t_len)
-                #positive is just the one driver you want to evaluate
-                positive = original[i,:,:,:]
-                #Negative is ALL other drivers
-                negative = torch.Tensor(original.numpy()[np.arange(len(original.numpy()))!=i])
-                #Target is the index of the driver, nothing special
-                target = i
-                #To be filled in
-                #TODO: Fill this in
-                data_info = {'mask':0, 'other_gt':[np.arange(len(original.numpy()))!=i]}
-                self.new_dataset[f'{i}_{j}']=([original,positive,negative,
-                                                dataset_split(eval,self.interval,self.t_len),
-                                                dataset_split(test,self.interval,self.t_len),np.array(target),data_info])
-        return original,positive,negative,target,data_info
-
-
-
+        return total_set
+        

@@ -25,7 +25,9 @@ training_set  = dataset_split(training_tensor,20,1) #Splits any tensor into snip
 eval_set = dataset_split(eval_tensor,20,1)
 test_set = dataset_split(testing_tensor,20,1)
 len_set = [31 for x in training_tensor]
-
+print(training_set.shape)
+print(eval_set.shape)
+print(test_set.shape)
 
 #Initialize Model
 model = TCN(c_in = 31,wavelet = True, l_in = 800,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
@@ -38,8 +40,7 @@ evaluator1 = Evaluator('cuda',100,False,1.0,'triplet',0.5 )
 optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,batch_size,10,100)
 
 
-tot_ds = dataset_open('highway')
-tot_ds = Driver_Dataset(tot_ds)
+
 
 if setting == 'test':
     # The following should be the same as for normal evaluation
