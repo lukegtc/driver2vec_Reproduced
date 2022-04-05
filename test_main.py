@@ -26,24 +26,14 @@ training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('hig
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
 
 training_tensor  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
-print(training_tensor.shape)
+# print(training_tensor.shape)
 # print(training_tensor.shape)
 # print(eval_tensor.shape)
 # print(testing_tensor.shape)
-len_set = [31 for x in training_tensor]
+len_set = [32 for x in training_tensor]
 scoring = 0
-
-
 tot_ds = Driver_Dataset()
 dataset = tot_ds.dataset_generator()
-# print(tot_ds.dataset_generator())
-
-print(len(dataset['highway'][0]['training']))
-
-
-original,pos,neg,target, data_info = dataset['highway'][0]['training'][0]
-
-
 # print(test_ds.dataset)
 # Fully connected layers
 # in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
@@ -68,13 +58,13 @@ model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers,
 #TODO: column selector
 
 
-evaluator1 = Evaluator('cuda',100,False,1.0,'triplet',0.5 )
+evaluator1 = Evaluator('cuda',100,1.0,'triplet',0.5 )
 
 eval_metrics = TRIPLET_EVAL_METRICS
 
 predictor1 = Predictor(model, 'cuda', False)
 
-optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,384,10,100)
+optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,100,10,100)
 test1 = DataLoader(dataset=training_tensor[0,:,0,:],batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers)
 
 
@@ -102,38 +92,70 @@ if setting == 'train':
     while not optimizer1.completed():
 
         for original, positive, negative, target, data_info in dataset['highway'][0]['training']:
-
+           
+            # original = original.permute(0, 2, 1)
+            positive = positive.reshape(1,positive.shape[0],positive.shape[1])
+            original = original.permute(0, 2, 1)
+            # print(original.shape)
+            positive = positive.permute(0,2,1)
+            negative = negative.permute(0,2,1)
+            # positive = positive.permute(1,0)
+            # negative = negative.permute(0,2,1)
             # TODO: ADD another for loop since it should be done by segment (1 segment is 100 datapoints long)
-            original = gen_wavelet(np.array(original,dtype=np.float32))
-            positive = gen_wavelet(np.array(positive,dtype=np.float32))
-            negative = gen_wavelet(np.array(negative,dtype=np.float32))
-            # TODO Fix this by getting the right loss function rather than
+            # original_holder = np.empty((5,62,100))
+            # negative_holder = np.empty((4,62,100))
+            # for i in np.arange(5):
+            #     original_segment = gen_wavelet(np.array(original[i,:,:],dtype=np.float32))
+            #     original_holder[i,:,:] = original_segment
+            # original = original_holder
+            # for i in np.arange(4):
+            #     negative_segment = gen_wavelet(np.array(negative[i,:,:],dtype=np.float32))
+            #     negative_holder[i,:,:] = negative_segment
+            # negative = negative_holder
+            # positive = gen_wavelet(np.array(positive,dtype=np.float32))
+            original = torch.Tensor(gen_wavelet(np.array(original,dtype=np.float32)))
+            negative = torch.Tensor(gen_wavelet(np.array(negative,dtype=np.float32)))
+            positive = torch.Tensor(gen_wavelet(np.array(positive,dtype=np.float32)))
+            
+
+            print('original', original.shape)
+            print('positive', positive.shape)
+            print('negative', negative.shape)
+
+            print(original.shape)            # TODO Fix this by getting the right loss function rather than
             # skipping the ones with incorrect shape
-            if len(original) == batch_size:
-                original = original.to(device)
-                target = target.to(device)
-                with torch.set_grad_enabled(True):
-                    predictions, other_info = model(original,positive,negative)
-                    other_info['data_info'] = data_info
-                    info_to_evaluate = {'predictions': predictions,
-                                        'ground_truth': target,
-                                        'other_info': other_info}
+            # if len(original[0][]) == batch_size:
+            original = original.to(device)
+            target = target.to(device)
+            with torch.set_grad_enabled(True):
+                print('check')
+                
+                predictions, other_info = model(original,positive,negative)
+                print(original.shape)
+                print(positive.shape)
+                print(negative.shape)
+                print(predictions.shape)
+                
+                other_info['data_info'] = data_info
+                info_to_evaluate = {'predictions': predictions,
+                                    'ground_truth': target,
+                                    'other_info': other_info}
 
-                    eval_result = evaluator1.evaluate('train', optimizer1,info_to_evaluate,eval_metrics['train']['train'])
-                    scalar_results, image_results = eval_result
+                eval_result = evaluator1.evaluate('train', optimizer1,info_to_evaluate) #,eval_metrics['train']['train']
+                scalar_results, image_results = eval_result
 
-                optimizer1.zero_grad()
-                # Compute gradient norm to prevent gradient explosion
-                gradient_norm, weight_norm, large_gradient = evaluator1.loss_backward(model,clipping_value)
-                scalar_results[f'train:gradient_norm'] = gradient_norm
-                scalar_results[f'train:weight_norm'] = weight_norm
+            optimizer1.zero_grad()
+            # Compute gradient norm to prevent gradient explosion
+            gradient_norm, weight_norm, large_gradient = evaluator1.loss_backward(model,clipping_value)
+            scalar_results[f'train:gradient_norm'] = gradient_norm
+            scalar_results[f'train:weight_norm'] = weight_norm
 
-                # If gradient is large, just don't step that one
-                if not large_gradient:
-                    optimizer1.step()
-            else:
-                print(f'Skipping batch with size {len(original)} '
-                           f'at total step {optimizer1.total_step}')
+            # If gradient is large, just don't step that one
+            if not large_gradient:
+                optimizer1.step()
+            # else:
+            #     print(f'Skipping batch with size {len(original)} '
+            #                f'at total step {optimizer1.total_step}')
             optimizer1.end_iter()
             
             if (fast_debug or optimizer1.total_step == 50 or(do_eval and optimizer1.total_step % eval_steps == 0)):

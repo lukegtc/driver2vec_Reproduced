@@ -15,7 +15,7 @@ import torch.nn.functional as F
 # from constants import *
 
 
-INFO_RE = re.compile(r'Driver: (?P<driver>.*), Area: (?P<area>.*), index: (?P<index>.*)')
+# INFO_RE = re.compile(r'Driver: (?P<driver>.*), Area: (?P<area>.*), index: (?P<index>.*)')
 
 # pool = None
 
@@ -68,12 +68,21 @@ def loss_triplet_wrapper(loss_inputs):
     orig = cash_to_tensor(loss_inputs['other_info']['orig'])
     pos = cash_to_tensor(loss_inputs['other_info']['pos'])
     neg = cash_to_tensor(loss_inputs['other_info']['neg'])
-
-    # This is to verify magnitude of embeddings
-    loss_embedd = orig.norm(2) + pos.norm(2) + neg.norm(2)
-    print(f'Triplet embedding magnitude loss {loss_embedd}')
-    losses = F.triplet_margin_loss(orig, pos, neg, margin) * weight + \
-                nn.CrossEntropyLoss()(pred, target.long()) * (1 - weight)
+   
+    # # This is to verify magnitude of embeddings
+    # loss_embedd = orig.norm(2) + pos.norm(2) + neg.norm(2)
+    # print(f'Triplet embedding magnitude loss {loss_embedd}')
+    
+    loss_set = []
+    for set in neg:
+        
+        print(orig[int(target)].shape,pos.shape,set.shape)
+        print(f'F.triplet_margin_loss(orig, pos, neg, margin) * weight:{F.triplet_margin_loss(orig[target].reshape(1,orig[target].shape[0]), pos, set.reshape(1,set.shape[0]), margin) * weight}')
+        print(pred.shape)
+        print(f'nn.CrossEntropyLoss()(pred, target.long()) * (1 - weight):{nn.CrossEntropyLoss()(pred[target], torch.Tensor(target).long()) * (1 - weight)}')
+        
+        losses = F.triplet_margin_loss(orig, pos, neg, margin) * weight + \
+                    nn.CrossEntropyLoss()(pred[target], target.long()) * (1 - weight)
 
     return losses
 
@@ -81,11 +90,11 @@ def loss_triplet_wrapper(loss_inputs):
 pool = multiprocessing.Pool(4)
 # We might want multi-target stuff
 class Evaluator():
-    def __init__(self, device,heavy_log_steps,fast_debug,triplet_margin,loss_fn_name,triplet_weight ):
+    def __init__(self, device,heavy_log_steps,triplet_margin,loss_fn_name,triplet_weight ):
 
         self.device = device
         self.heavy_log_steps = heavy_log_steps
-        self.fast_debug = fast_debug
+    
         # margin for triplet loss
         self.triplet_margin = triplet_margin
         self.define_loss(loss_fn_name)
@@ -128,30 +137,13 @@ class Evaluator():
         torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
         return gradient_norm, weight_norm, large_gradient
     
-    def evaluate(self, mode, optimizer, info_for_eval, eval_metrics):
+    def evaluate(self, mode, optimizer, info_for_eval): #, eval_metrics
 
         info_for_eval['triplet_margin'] = self.triplet_margin
         info_for_eval['triplet_weight'] = self.triplet_weight
 
         # Evaluations
         scalar_results = {}
-        image_results = {}
-        arg_0 = mode
-        arg_1 = self.fast_debug
-        arg_2 = (optimizer.total_step % self.heavy_log_steps) == 0
-        for metric in eval_metrics:
-            args = [arg_0, arg_1, arg_2]
-            args.extend(metric[1])
-            args.append(info_for_eval)
-
-            result_type, eval_name, value = globals()[metric[0]](*args)
-            
-            if result_type == 'scalar':
-                scalar_results[f'{mode}:{eval_name}'] = value
-            elif result_type == 'image':
-                image_results[f'{mode}:{eval_name}'] = value
-            elif result_type == 'none':
-                pass
 
         # Loss Function
         loss = self.loss_fn(info_for_eval)
@@ -166,6 +158,6 @@ class Evaluator():
                 learning_rate = pg['lr']
                 scalar_results[f'{mode}:learning_rate'] = learning_rate
 
-        return scalar_results, image_results
+        return scalar_results
             
       

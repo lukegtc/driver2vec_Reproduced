@@ -30,15 +30,19 @@ class TCN(nn.Module):
         self.linear = nn.Linear(linear_size, out_n)
         
 
-    def forward(self, inputs,positive,negative):  #,positive,negative
+    def forward_TCN(self, inputs,positive,negative):  #,positive,negative
         """Inputs have to have dimension (N, C_in, L_in)"""
         if self.wavelet:
             # inputs = inputs.permute(0, 2, 1)
             # print(self.c_in)
+            print(inputs.shape)
             splits = torch.split(inputs, self.c_in, dim=2)
-
+           
             inputs = splits[0]
             wvlt_inputs = splits[1]
+
+
+
             # print(wvlt_inputs.shape)
             splits2 = torch.split(wvlt_inputs,self.l_in // 2,dim=1)
             # print(len(splits2))
@@ -55,12 +59,33 @@ class TCN(nn.Module):
         last = y1[:, :, -1]
         # print(last.shape)
         if self.wavelet:
-            last = torch.cat([last, wvlt_out1, wvlt_out2], dim=1)
 
-        normalized = self.input_bn(last)
+            if wvlt_out1.ndim == 1:
+
+                wvlt_out1 = wvlt_out1.reshape(1,wvlt_out1.shape[0])
+                wvlt_out2 = wvlt_out2.reshape(1,wvlt_out2.shape[0])
+
+            last = torch.cat([last, wvlt_out1, wvlt_out2], dim=1)
+        print(last.shape)
+        if last.shape[0] == 1:
+            normalized = last
+        else:
+            normalized = self.input_bn(last)
         o = self.linear(normalized)
         # return o, {'orig': last, 'pos': None, 'neg': None}
         # print(normalized.shape)
         # print(o.shape)
-        return normalized, {'orig': normalized, 'pos': positive, 'neg': negative}
+        
+        return o, {'orig': normalized, 'pos': positive, 'neg': negative}
 
+    def forward(self,inputs,positive,negative):
+        o1, cur_emb_out = self.forward_TCN(inputs, None, None)  # input should have dimension (N, C, L)
+        last = nn.Sigmoid()(cur_emb_out['orig'])
+        print(last.shape)
+        o, pos_emb_out = self.forward_TCN(positive, None, None)
+        o, neg_emb_out = self.forward_TCN(negative, None, None)    
+        plast = nn.Sigmoid()(pos_emb_out['orig'])
+        nlast = nn.Sigmoid()(neg_emb_out['orig'])      
+
+
+        return o1, {'orig': last, 'pos': plast, 'neg': nlast}
