@@ -70,20 +70,29 @@ def loss_triplet_wrapper(loss_inputs):
     neg = cash_to_tensor(loss_inputs['other_info']['neg'])
    
     # # This is to verify magnitude of embeddings
-    # loss_embedd = orig.norm(2) + pos.norm(2) + neg.norm(2)
-    # print(f'Triplet embedding magnitude loss {loss_embedd}')
-    
-    loss_set = []
-    for set in neg:
-        
-        print(orig[int(target)].shape,pos.shape,set.shape)
-        print(f'F.triplet_margin_loss(orig, pos, neg, margin) * weight:{F.triplet_margin_loss(orig[target].reshape(1,orig[target].shape[0]), pos, set.reshape(1,set.shape[0]), margin) * weight}')
-        print(pred.shape)
-        print(f'nn.CrossEntropyLoss()(pred, target.long()) * (1 - weight):{nn.CrossEntropyLoss()(pred[target], torch.Tensor(target).long()) * (1 - weight)}')
-        
-        losses = F.triplet_margin_loss(orig, pos, neg, margin) * weight + \
-                    nn.CrossEntropyLoss()(pred[target], target.long()) * (1 - weight)
+    loss_embedd = orig.norm(2) + pos.norm(2) + neg.norm(2)
+    print(f'Triplet embedding magnitude loss {loss_embedd}')
 
+    # Check current driver
+    for i in np.arange(5):
+        if sum(target[:,i]) == 1.0:
+            idx = i
+    orig = torch.reshape(orig[idx,:], (1,62))
+    loss_set = []
+    print(orig.shape)
+    print(pos.shape)
+    print(neg.shape)
+    for set in neg:
+        set = torch.reshape(set, (1,62))
+        print(set.shape)
+        # print(set)
+        # print(orig[int(target)].shape,pos.shape,set.shape)
+        # print(f'F.triplet_margin_loss(orig, pos, neg, margin) * weight:{F.triplet_margin_loss(orig[int(target)].reshape(1,orig[int(target)].shape[0]), pos, set.reshape(1,set.shape[0]), margin) * weight}')
+        # print(pred.shape)
+        # print(f'nn.CrossEntropyLoss()(pred, target.long()) * (1 - weight):{nn.CrossEntropyLoss()(pred[target], torch.Tensor(target).long()) * (1 - weight)}')
+
+        losses = F.triplet_margin_loss(orig, pos, neg, margin) * weight + \
+                    nn.CrossEntropyLoss()(pred, target.float()) * (1 - weight)
     return losses
 
 

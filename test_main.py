@@ -122,27 +122,26 @@ if setting == 'train':
             print('positive', positive.shape)
             print('negative', negative.shape)
 
-            print(original.shape)            # TODO Fix this by getting the right loss function rather than
-            # skipping the ones with incorrect shape
-            # if len(original[0][]) == batch_size:
             original = original.to(device)
             target = target.to(device)
             with torch.set_grad_enabled(True):
                 print('check')
-                
+                print('target', target)
                 predictions, other_info = model(original,positive,negative)
-                print(original.shape)
+                print('shape original', original.shape)
                 print(positive.shape)
                 print(negative.shape)
-                print(predictions.shape)
-                
+                print(predictions)
+
                 other_info['data_info'] = data_info
                 info_to_evaluate = {'predictions': predictions,
                                     'ground_truth': target,
                                     'other_info': other_info}
 
-                eval_result = evaluator1.evaluate('train', optimizer1,info_to_evaluate) #,eval_metrics['train']['train']
+                eval_result = evaluator1.evaluate('train', optimizer1, info_to_evaluate) #,eval_metrics['train']['train']
                 scalar_results, image_results = eval_result
+                print(eval_result)
+                print(scalar_results)
 
             optimizer1.zero_grad()
             # Compute gradient norm to prevent gradient explosion

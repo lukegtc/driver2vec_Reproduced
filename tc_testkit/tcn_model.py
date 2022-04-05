@@ -35,7 +35,7 @@ class TCN(nn.Module):
         if self.wavelet:
             # inputs = inputs.permute(0, 2, 1)
             # print(self.c_in)
-            print(inputs.shape)
+            # print(inputs.shape)
             splits = torch.split(inputs, self.c_in, dim=2)
            
             inputs = splits[0]
@@ -66,7 +66,7 @@ class TCN(nn.Module):
                 wvlt_out2 = wvlt_out2.reshape(1,wvlt_out2.shape[0])
 
             last = torch.cat([last, wvlt_out1, wvlt_out2], dim=1)
-        print(last.shape)
+        # print(last.shape)
         if last.shape[0] == 1:
             normalized = last
         else:
@@ -81,7 +81,7 @@ class TCN(nn.Module):
     def forward(self,inputs,positive,negative):
         o1, cur_emb_out = self.forward_TCN(inputs, None, None)  # input should have dimension (N, C, L)
         last = nn.Sigmoid()(cur_emb_out['orig'])
-        print(last.shape)
+        # print(last.shape)
         o, pos_emb_out = self.forward_TCN(positive, None, None)
         o, neg_emb_out = self.forward_TCN(negative, None, None)    
         plast = nn.Sigmoid()(pos_emb_out['orig'])
