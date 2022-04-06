@@ -88,11 +88,10 @@ def do_test():
 do_test()
 if setting == 'train':
     model.train()
-
+    print(torch.nn.ParameterList(model.parameters()))
     while not optimizer1.completed():
-
+        iteration = 0
         for original, positive, negative, target, data_info in dataset['highway'][0]['training']:
-           
             # original = original.permute(0, 2, 1)
             positive = positive.reshape(1,positive.shape[0],positive.shape[1])
             original = original.permute(0, 2, 1)
@@ -118,20 +117,15 @@ if setting == 'train':
             positive = torch.Tensor(gen_wavelet(np.array(positive,dtype=np.float32)))
             
 
-            print('original', original.shape)
-            print('positive', positive.shape)
-            print('negative', negative.shape)
+            # print('original', original.shape)
+            # print('positive', positive.shape)
+            # print('negative', negative.shape)
 
             original = original.to(device)
             target = target.to(device)
             with torch.set_grad_enabled(True):
-                print('check')
-                print('target', target)
                 predictions, other_info = model(original,positive,negative)
-                print('shape original', original.shape)
-                print(positive.shape)
-                print(negative.shape)
-                print(predictions)
+
 
                 other_info['data_info'] = data_info
                 info_to_evaluate = {'predictions': predictions,
@@ -139,42 +133,42 @@ if setting == 'train':
                                     'other_info': other_info}
 
                 eval_result = evaluator1.evaluate('train', optimizer1, info_to_evaluate) #,eval_metrics['train']['train']
-                scalar_results, image_results = eval_result
-                print(eval_result)
-                print(scalar_results)
+                scalar_results = eval_result
+                # print('eval results: ', eval_result)
+                # print('scalar results: ',scalar_results)
 
             optimizer1.zero_grad()
             # Compute gradient norm to prevent gradient explosion
             gradient_norm, weight_norm, large_gradient = evaluator1.loss_backward(model,clipping_value)
             scalar_results[f'train:gradient_norm'] = gradient_norm
             scalar_results[f'train:weight_norm'] = weight_norm
+            print('scalar results: ',scalar_results)
 
             # If gradient is large, just don't step that one
             if not large_gradient:
+                print('optimising step')
                 optimizer1.step()
             # else:
             #     print(f'Skipping batch with size {len(original)} '
             #                f'at total step {optimizer1.total_step}')
             optimizer1.end_iter()
-            
+            print(iteration)
+            iteration += 1
             if (fast_debug or optimizer1.total_step == 50 or(do_eval and optimizer1.total_step % eval_steps == 0)):
 
                 cur_step = optimizer1.total_step
-#TODO: FIX
-                predictor1.start_prediction(training_tensor)
-
+                #TODO: FIX
+                predictor1.start_prediction(dataset['highway'][0]['training'])
                 #TODO: FIX
                 predictor_out = predictor1.lgbm_predict(
-                    testing_tensor,
-                    'lgbm_predict'
-                )
-#TODO: FIX
+                    dataset['highway'][0]['testing'],
+                    'lgbm_predict')
+                #TODO: FIX
                 eval_result = evaluator1.evaluate(
                     'test_lgbm',
                     optimizer1,
-                    predictor_out,
-                    scoring)
-                scalar_results, image_results = eval_result
+                    predictor_out) #,scoring)
+                scalar_results = eval_result
             
             if (fast_debug or (optimizer1.total_step % save_steps == 0)):
                 print({'save:steps': f'Training progress saved at '
