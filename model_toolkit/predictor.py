@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 import lightgbm as lgb
+from utils import *
 
 # from constants import NUM_DRIVERS
 
@@ -72,18 +73,23 @@ class Predictor(object):
         other_info = defaultdict(list)
         debug_counter = 0
         with tqdm(total=len(loader)) as progress_bar:
-            for orig_features, pos_features, neg_features, targets, data_info \
-                in loader:
-
+            for orig_features, pos_features, neg_features, targets, data_info in loader:
                 if np.random.rand() > ratio:
                     progress_bar.update(targets.size(0))
                     continue
+                pos_features = pos_features.reshape(1, pos_features.shape[0], pos_features.shape[1])
+                orig_features = orig_features.permute(0, 2, 1)
+                pos_features = pos_features.permute(0, 2, 1)
+                neg_features = neg_features.permute(0, 2, 1)
+
+                orig_features = torch.Tensor(gen_wavelet(np.array(orig_features, dtype=np.float32)))
+                neg_features = torch.Tensor(gen_wavelet(np.array(neg_features, dtype=np.float32)))
+                pos_features = torch.Tensor(gen_wavelet(np.array(pos_features, dtype=np.float32)))
 
                 with torch.no_grad():
                     predictions, info = self.model(orig_features,
                                                   pos_features,
-                                                  neg_features,
-                                                  need_triplet_emb)
+                                                  neg_features)   #,need_triplet_emb)
 
                 outputs.append(predictions.cpu())
                 ground_truth.append(targets.cpu())
