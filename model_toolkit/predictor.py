@@ -14,13 +14,7 @@ def recursive_append(target_dict, source_dict):
         if type(source_dict[e]) == dict:
             if e not in target_dict:
                 target_dict[e] = defaultdict(list)
-            target_dict[e] = recursive_append(target_dict[e], source_dict[e])
-        elif source_dict[e] is not None:
-            if type(source_dict[e]) == list:
-                target_dict[e].append(source_dict[e])
-            else:
-                target_dict[e].append(source_dict[e])
-    
+            target_dict[e].append(source_dict[e])
     return target_dict
 
 def recursive_concat(source_dict):
@@ -29,11 +23,7 @@ def recursive_concat(source_dict):
         if type(source_dict[e]) == dict or type(source_dict[e]) == defaultdict:
             source_dict[e] = recursive_concat(source_dict[e])
         elif source_dict[e] is not None:
-            # if isinstance(source_dict[e], list):
-            #     if np.array(source_dict[e]).ndim == 1:
-            #         print(source_dict[e])
-            #     else:
-            #         print('hello')
+
             source_dict[e] = np.concatenate(source_dict[e])
     
     return source_dict
@@ -78,6 +68,7 @@ class Predictor(object):
         ground_truth = []
         other_info = defaultdict(list)
         debug_counter = 0
+        print(loader)
         with tqdm(total=len(loader)) as progress_bar:
             for orig_features, pos_features, neg_features, targets, data_info in loader:
                 if np.random.rand() > ratio:
