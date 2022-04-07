@@ -123,20 +123,26 @@ class Driver_Dataset():
                                    
                     #positive is just the one driver you want to evaluate
                     positive = original[i,:,:,:]
+                    positive_eval = eval[i,:,:]
+                    positive_test = test[i,:,:]
                     #Negative is ALL other drivers
                     negative = torch.Tensor(original.numpy()[np.arange(len(original.numpy()))!=i])
+                    negative_eval = torch.Tensor(eval.numpy()[np.arange(len(eval.numpy()))!=i])
+                    negative_test = torch.Tensor(test.numpy()[np.arange(len(test.numpy()))!=i])
                     #Target is the index of the driver, nothing special
                     target = np.zeros([5])
                     target[i] = 1
                     data_info = {'mask':0, 'other_gt':[np.arange(len(original.numpy()))!=i]}
+                    data_info_eval = {'mask':0, 'other_gt':[np.arange(len(eval.numpy()))!=i]}
+                    data_info_test = {'mask':0, 'other_gt':[np.arange(len(test.numpy()))!=i]}
                     driver_segments = []
                     for k in range(original.shape[2]):
 
                         driver_segments.append([torch.Tensor(original[:,:,k,:]),torch.Tensor(positive[:,k,:]),torch.Tensor(negative[:,:,k,:]),torch.Tensor(target),data_info])
            
                     single_driver_set['training'] = driver_segments
-                    single_driver_set['eval'] = eval
-                    single_driver_set['test'] = test
+                    single_driver_set['eval'] = [eval,positive_eval,negative_eval,torch.Tensor(target),data_info_eval]
+                    single_driver_set['test'] = [test,positive_test,negative_test,torch.Tensor(target),data_info_test]
                     driver_set[i] = single_driver_set
                 terrain_set[j] = driver_set
 
