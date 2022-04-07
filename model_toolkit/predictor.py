@@ -68,8 +68,9 @@ class Predictor(object):
         ground_truth = []
         other_info = defaultdict(list)
         debug_counter = 0
-        print(loader)
+        
         with tqdm(total=len(loader)) as progress_bar:
+            print(len(loader))
             for orig_features, pos_features, neg_features, targets, data_info in loader:
                 if np.random.rand() > ratio:
                     progress_bar.update(targets.size(0))
