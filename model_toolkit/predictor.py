@@ -19,15 +19,21 @@ def recursive_append(target_dict, source_dict):
             if type(source_dict[e]) == list:
                 target_dict[e].append(source_dict[e])
             else:
-                target_dict[e].append(source_dict[e].cpu())
+                target_dict[e].append(source_dict[e])
     
     return target_dict
 
 def recursive_concat(source_dict):
     for e in source_dict:
+        
         if type(source_dict[e]) == dict or type(source_dict[e]) == defaultdict:
             source_dict[e] = recursive_concat(source_dict[e])
         elif source_dict[e] is not None:
+            # if isinstance(source_dict[e], list):
+            #     if np.array(source_dict[e]).ndim == 1:
+            #         print(source_dict[e])
+            #     else:
+            #         print('hello')
             source_dict[e] = np.concatenate(source_dict[e])
     
     return source_dict
@@ -91,8 +97,8 @@ class Predictor(object):
                                                   pos_features,
                                                   neg_features)   #,need_triplet_emb)
 
-                outputs.append(predictions.cpu())
-                ground_truth.append(targets.cpu())
+                outputs.append(predictions)
+                ground_truth.append(targets)
                 # embeddings.append(emb.cpu())
                 other_info = recursive_append(other_info, info)
                 if 'data_info' not in other_info:
@@ -110,6 +116,7 @@ class Predictor(object):
                     break
 
         outputs = np.concatenate(outputs)
+        print(len(outputs))
         ground_truth = np.concatenate(ground_truth)
         other_info = recursive_concat(other_info)
 
@@ -117,19 +124,9 @@ class Predictor(object):
 
         return outputs, ground_truth, other_info
 
-    def start_prediction(self, train_loader,
-                         save_train_emb=True):
-        # TODO Let's say, we want no more than 10K input for LightGBM
-        data_count = len(train_loader)
-        NUM_ALLOWED = 20000.0
-        if data_count > NUM_ALLOWED:
-            ratio = NUM_ALLOWED / data_count
-            # self.logger.log(f'Using ratio of {ratio} for '\
-                            # f'total count of {data_count}')
-        else:
-            ratio = 1.0
-            # self.logger.log(f'Full set is used')
-        train_out, train_gt, train_emb = self._predict(train_loader, ratio,False)
+    def start_prediction(self, train_loader):
+
+        train_out, train_gt, train_emb = self._predict(train_loader)
         self.train_results = train_out, train_gt, train_emb
 
 

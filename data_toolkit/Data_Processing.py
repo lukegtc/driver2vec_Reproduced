@@ -126,8 +126,8 @@ class Driver_Dataset():
                     #Negative is ALL other drivers
                     negative = torch.Tensor(original.numpy()[np.arange(len(original.numpy()))!=i])
                     #Target is the index of the driver, nothing special
-                    target = np.zeros([5,5])
-                    target[i,i] = 1
+                    target = np.zeros([5])
+                    target[i] = 1
                     data_info = {'mask':0, 'other_gt':[np.arange(len(original.numpy()))!=i]}
                     driver_segments = []
                     for k in range(original.shape[2]):

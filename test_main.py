@@ -21,38 +21,19 @@ eval_steps = 400
 fast_debug = False
 clipping_value = 1.0
 batch_size = 36  #384
-setting = 'train' #train or test
+setting = 'test' #train or test
 training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=False, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
 
 training_tensor  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
-# print(training_tensor.shape)
-# print(training_tensor.shape)
-# print(eval_tensor.shape)
-# print(testing_tensor.shape)
+
 len_set = [32 for x in training_tensor]
 scoring = 0
 tot_ds = Driver_Dataset()
 dataset = tot_ds.dataset_generator()
-# print(test_ds.dataset)
-# Fully connected layers
-# in_features = training_tensor.size(dim=0) * training_tensor.size(dim=2)
-# input_channels = training_tensor.size(dim=1)
-# fc_test = FCN(in_features=in_features, input_channels=input_channels, hidden_dim=256, out_features=15)
-# fc_test.forward(training_tensor)
 
-# print(len_set)
-# test_net = Full_TCN_wavelet.FullTCNet(31,len_set,7,0.1)
-# test_wavelet = TCN_wavelet(in_num = 31 ,wavelet = False,in_len = 1000,out_len = 5,kernel = 7,dropout=0.1,tot_channels='25,25,25,25,25,25,25,25',wave_out_len= 15) #Fix based on kwargs list in the FTCN module
-
-# print(test_wavelet.forward(input = input_tensor))
-# print('testing')
-# unit_test = TUnit(in_num = 31,out_num = 31,kernel =7,stride = 1,dilation = 1,padding = 6,dropout = 0.1)
-# print('testing')
-# print(unit_test.forward(input_tensor))
 model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
-# training_tensor = training_tensor.permute(0, 2, 1)
-# print(model.forward(training_tensor.float()).shape)
+
 
 
 #TODO: column selector
@@ -74,13 +55,13 @@ def do_test():
         # The following should be the same as for normal evaluation
         cur_step = optimizer1.total_step
 
-        predictor1.start_prediction(training_tensor)
+        predictor1.start_prediction(dataset['highway'][0]['training'])
         loader_name = 'test_lgbm'
-        data_loaders = testing_tensor
+        data_loaders = dataset['highway'][0]['test']
         # TODO: CHANGE
         predictor_out = predictor1.lgbm_predict(loader_name,data_loaders,'lgbm_predict')  #Returns attributes of predictor and data_loader
         # TODO: CHANGE
-        scalar_results, image_results = evaluator1.evaluate(loader_name,optimizer1,predictor_out,eval_metrics['test'][loader_name][0])
+        scalar_results = evaluator1.evaluate(loader_name,optimizer1,predictor_out,data_loaders)
         print(scalar_results)
     else:
         print('Test skipped')
@@ -88,38 +69,21 @@ def do_test():
 do_test()
 if setting == 'train':
     model.train()
-    print(torch.nn.ParameterList(model.parameters()))
+
     while not optimizer1.completed():
         iteration = 0
         for original, positive, negative, target, data_info in dataset['highway'][0]['training']:
             # original = original.permute(0, 2, 1)
             positive = positive.reshape(1,positive.shape[0],positive.shape[1])
             original = original.permute(0, 2, 1)
-            # print(original.shape)
+
             positive = positive.permute(0,2,1)
             negative = negative.permute(0,2,1)
-            # positive = positive.permute(1,0)
-            # negative = negative.permute(0,2,1)
-            # TODO: ADD another for loop since it should be done by segment (1 segment is 100 datapoints long)
-            # original_holder = np.empty((5,62,100))
-            # negative_holder = np.empty((4,62,100))
-            # for i in np.arange(5):
-            #     original_segment = gen_wavelet(np.array(original[i,:,:],dtype=np.float32))
-            #     original_holder[i,:,:] = original_segment
-            # original = original_holder
-            # for i in np.arange(4):
-            #     negative_segment = gen_wavelet(np.array(negative[i,:,:],dtype=np.float32))
-            #     negative_holder[i,:,:] = negative_segment
-            # negative = negative_holder
-            # positive = gen_wavelet(np.array(positive,dtype=np.float32))
+
             original = torch.Tensor(gen_wavelet(np.array(original,dtype=np.float32)))
             negative = torch.Tensor(gen_wavelet(np.array(negative,dtype=np.float32)))
             positive = torch.Tensor(gen_wavelet(np.array(positive,dtype=np.float32)))
             
-
-            # print('original', original.shape)
-            # print('positive', positive.shape)
-            # print('negative', negative.shape)
 
             original = original.to(device)
             target = target.to(device)
@@ -134,8 +98,7 @@ if setting == 'train':
 
                 eval_result = evaluator1.evaluate('train', optimizer1, info_to_evaluate) #,eval_metrics['train']['train']
                 scalar_results = eval_result
-                # print('eval results: ', eval_result)
-                # print('scalar results: ',scalar_results)
+  
 
             optimizer1.zero_grad()
             # Compute gradient norm to prevent gradient explosion
@@ -148,9 +111,7 @@ if setting == 'train':
             if not large_gradient:
                 print('optimising step')
                 optimizer1.step()
-            # else:
-            #     print(f'Skipping batch with size {len(original)} '
-            #                f'at total step {optimizer1.total_step}')
+
             optimizer1.end_iter()
             print(iteration)
             iteration += 1
@@ -158,6 +119,7 @@ if setting == 'train':
 
                 cur_step = optimizer1.total_step
                 #TODO: FIX
+                
                 predictor1.start_prediction(dataset['highway'][0]['training'])
                 #TODO: FIX
                 predictor_out = predictor1.lgbm_predict(

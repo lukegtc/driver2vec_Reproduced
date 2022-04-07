@@ -7,35 +7,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 import torch.nn.functional as F
-# from sklearn.metrics import f1_score
-# from sklearn.metrics import confusion_matrix as skcm
 
-# from utils import *
-# from logger import Logger
-# from constants import *
-
-
-# INFO_RE = re.compile(r'Driver: (?P<driver>.*), Area: (?P<area>.*), index: (?P<index>.*)')
-
-# pool = None
-
-# def heavy_eval(is_heavy):
-#     def decorator(function):
-#         def wrapper(*args, **kwargs):
-#             # Find a simple way to handle this business ...
-#             # If is eval, or if fast debug, or
-#             # is train and not heavy, or is train and heavy
-#             if ((args[0] != 'train') or args[1] or \
-#                 (args[0] == 'train' and is_heavy and args[2]) or \
-#                 (args[0] == 'train' and not is_heavy)):
-#                 args = args[3:]
-#                 result = function(*args, **kwargs)
-#                 return result
-#             else:
-#                 print(f'Skipping eval function {function.__name__}')
-#                 return 'none', None, None
-#         return wrapper
-#     return decorator
 
 def detach_tensor(tensor):
     if type(tensor) != np.ndarray:
@@ -49,15 +21,6 @@ def cash_to_tensor(tensor):
     if type(tensor) == np.ndarray:
         return torch.Tensor(tensor)
     return tensor
-
-# Need wrapper for loss to handle different inputs
-# def loss_cross_entropy_wrapper(loss_inputs):
-#     pred = cash_to_tensor(loss_inputs['predictions'])
-#     target = cash_to_tensor(loss_inputs['ground_truth'])
-#     losses = F.cross_entropy(pred, target.long())
-
-#     return losses
-
 # https://github.com/adambielski/siamese-triplet/blob/master/losses.py
 def loss_triplet_wrapper(loss_inputs):
     # Verify triplet loss
@@ -74,25 +37,19 @@ def loss_triplet_wrapper(loss_inputs):
     print(f'Triplet embedding magnitude loss {loss_embedd}')
 
     # Check current driver
-    for i in np.arange(5):
-        if sum(target[:,i]) == 1.0:
-            idx = i
+    # for i in np.arange(5):
+    #     if sum(target[:,i]) == 1.0:
+    #         idx = i
+    idx = target.tolist().index(1)
     orig = torch.reshape(orig[idx,:], (1,62))
     loss_set = []
-    print(orig.shape)
-    print(pos.shape)
-    print(neg.shape)
+
     for set in neg:
         set = torch.reshape(set, (1,62))
-        print(set.shape)
-        # print(set)
-        # print(orig[int(target)].shape,pos.shape,set.shape)
-        # print(f'F.triplet_margin_loss(orig, pos, neg, margin) * weight:{F.triplet_margin_loss(orig[int(target)].reshape(1,orig[int(target)].shape[0]), pos, set.reshape(1,set.shape[0]), margin) * weight}')
-        # print(pred.shape)
-        # print(f'nn.CrossEntropyLoss()(pred, target.long()) * (1 - weight):{nn.CrossEntropyLoss()(pred[target], torch.Tensor(target).long()) * (1 - weight)}')
+
 
         losses = F.triplet_margin_loss(orig, pos, neg, margin) * weight + \
-                    nn.CrossEntropyLoss()(pred, target.float()) * (1 - weight)
+                    nn.CrossEntropyLoss()(pred, target.long()) * (1 - weight)
     return losses
 
 
