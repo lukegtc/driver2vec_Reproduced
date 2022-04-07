@@ -70,8 +70,10 @@ class Predictor(object):
         debug_counter = 0
         
         with tqdm(total=len(loader)) as progress_bar:
-            print(len(loader))
-            for orig_features, pos_features, neg_features, targets, data_info in loader:
+            
+            for i in loader:
+                print(len(i))
+                orig_features, pos_features, neg_features, targets, data_info = i
                 if np.random.rand() > ratio:
                     progress_bar.update(targets.size(0))
                     continue
@@ -108,7 +110,7 @@ class Predictor(object):
                     break
 
         outputs = np.concatenate(outputs)
-        print(len(outputs))
+        
         ground_truth = np.concatenate(ground_truth)
         other_info = recursive_concat(other_info)
 
