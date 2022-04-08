@@ -9,20 +9,19 @@ from utils import *
 # from constants import NUM_DRIVERS
 
 
-def recursive_append(target_dict, source_dict):    
+def recursive_append(target_dict, source_dict):
     for e in source_dict:
-        if type(source_dict[e]) == dict:
+        if type(source_dict) == dict:
             if e not in target_dict:
-                target_dict[e] = defaultdict(list)
-            target_dict[e].append(source_dict[e])
+                # target_dict[e] = defaultdict(list)
+                target_dict[e].append(source_dict[e])
     return target_dict
 
 def recursive_concat(source_dict):
     for e in source_dict:
-        
         if type(source_dict[e]) == dict or type(source_dict[e]) == defaultdict:
             source_dict[e] = recursive_concat(source_dict[e])
-        elif source_dict[e] is not None:
+        elif source_dict[e] is not None and e != 'mask':
 
             source_dict[e] = np.concatenate(source_dict[e])
     
@@ -60,7 +59,7 @@ class Predictor(object):
                           "feature_fraction_seed":341,}
         self.lgb_num_rounds = 15
 
-    def _predict(self, loader, ratio=1, need_triplet_emb=True):
+    def _predict(self, loader, setting, ratio=1, need_triplet_emb=True):
         
         self.model.eval()
 
@@ -68,69 +67,103 @@ class Predictor(object):
         ground_truth = []
         other_info = defaultdict(list)
         debug_counter = 0
-        
-        with tqdm(total=len(loader)) as progress_bar:
-            
-            for i in loader:
-                print(len(i))
-                orig_features, pos_features, neg_features, targets, data_info = i
-                if np.random.rand() > ratio:
+
+        if setting == 'test':
+            orig_features, pos_features, neg_features, targets, data_info = loader
+
+            pos_features = pos_features.reshape(1, pos_features.shape[0], pos_features.shape[1])
+            orig_features = orig_features.permute(0, 2, 1)
+            pos_features = pos_features.permute(0, 2, 1)
+            neg_features = neg_features.permute(0, 2, 1)
+
+            orig_features = torch.Tensor(gen_wavelet(np.array(orig_features, dtype=np.float32)))
+            neg_features = torch.Tensor(gen_wavelet(np.array(neg_features, dtype=np.float32)))
+            pos_features = torch.Tensor(gen_wavelet(np.array(pos_features, dtype=np.float32)))
+
+            with torch.no_grad():
+                predictions, info = self.model(orig_features,
+                                               pos_features,
+                                               neg_features)  # ,need_triplet_emb)
+
+            outputs.append(predictions)
+
+            ground_truth.append(targets)
+            # embeddings.append(emb.cpu())
+            # print('OTHER INFO test: ', other_info)
+            other_info = recursive_append(other_info, info)
+            # print('OTHER INFO test: ', other_info)
+            if 'data_info' not in other_info:
+                other_info['data_info'] = recursive_append(
+                    defaultdict(list),
+                    data_info)
+            else:
+                other_info['data_info'] = recursive_append(
+                    other_info['data_info'],
+                    data_info)
+
+
+        elif setting == 'train':
+            with tqdm(total=len(loader)) as progress_bar:
+                for i in loader:
+                    print(len(i))
+                    orig_features, pos_features, neg_features, targets, data_info = i
+                    if np.random.rand() > ratio:
+                        progress_bar.update(targets.size(0))
+                        continue
+                    pos_features = pos_features.reshape(1, pos_features.shape[0], pos_features.shape[1])
+                    orig_features = orig_features.permute(0, 2, 1)
+                    pos_features = pos_features.permute(0, 2, 1)
+                    neg_features = neg_features.permute(0, 2, 1)
+
+                    orig_features = torch.Tensor(gen_wavelet(np.array(orig_features, dtype=np.float32)))
+                    neg_features = torch.Tensor(gen_wavelet(np.array(neg_features, dtype=np.float32)))
+                    pos_features = torch.Tensor(gen_wavelet(np.array(pos_features, dtype=np.float32)))
+
+                    with torch.no_grad():
+                        predictions, info = self.model(orig_features,
+                                                      pos_features,
+                                                      neg_features)   #,need_triplet_emb)
+                    outputs.append(predictions)
+                    ground_truth.append(targets)
+                    # embeddings.append(emb.cpu())
+                    other_info = recursive_append(other_info, info)
+                    if 'data_info' not in other_info:
+                        other_info['data_info'] = recursive_append(
+                            defaultdict(list),
+                            data_info)
+                    else:
+                        other_info['data_info'] = recursive_append(
+                            other_info['data_info'],
+                            data_info)
                     progress_bar.update(targets.size(0))
-                    continue
-                pos_features = pos_features.reshape(1, pos_features.shape[0], pos_features.shape[1])
-                orig_features = orig_features.permute(0, 2, 1)
-                pos_features = pos_features.permute(0, 2, 1)
-                neg_features = neg_features.permute(0, 2, 1)
 
-                orig_features = torch.Tensor(gen_wavelet(np.array(orig_features, dtype=np.float32)))
-                neg_features = torch.Tensor(gen_wavelet(np.array(neg_features, dtype=np.float32)))
-                pos_features = torch.Tensor(gen_wavelet(np.array(pos_features, dtype=np.float32)))
-
-                with torch.no_grad():
-                    predictions, info = self.model(orig_features,
-                                                  pos_features,
-                                                  neg_features)   #,need_triplet_emb)
-
-                outputs.append(predictions)
-                ground_truth.append(targets)
-                # embeddings.append(emb.cpu())
-                other_info = recursive_append(other_info, info)
-                if 'data_info' not in other_info:
-                    other_info['data_info'] = recursive_append(
-                        defaultdict(list),
-                        data_info)
-                else:
-                    other_info['data_info'] = recursive_append(
-                        other_info['data_info'],
-                        data_info)
-                progress_bar.update(targets.size(0))
-
-                debug_counter += 1
-                if self.fast_debug and debug_counter >= 4:
-                    break
+                    debug_counter += 1
+                    if self.fast_debug and debug_counter >= 4:
+                        break
 
         outputs = np.concatenate(outputs)
         
         ground_truth = np.concatenate(ground_truth)
         other_info = recursive_concat(other_info)
+        print(setting, other_info)
 
         self.model.train()
-
         return outputs, ground_truth, other_info
 
-    def start_prediction(self, train_loader):
+    def start_prediction(self, train_loader, setting):
 
-        train_out, train_gt, train_emb = self._predict(train_loader)
+        train_out, train_gt, train_emb = self._predict(train_loader, setting)
         self.train_results = train_out, train_gt, train_emb
 
 
 
-    def lgbm_predict(self, other_loader, loader_name,
-                            save_simple_predict=True):
-        other_out, other_gt, other_info = self._predict(other_loader)
+    def lgbm_predict(self, other_loader, setting):
+        other_out, other_gt, other_info = self._predict(other_loader, setting)
         train_out, train_gt, train_emb = self.train_results
         # TODO: Create a Saver that doesnt use the logger function in the og script
-
+        print('test lgbm_predict')
+        print(np.shape(train_emb['orig']))
+        print(train_gt.shape)
         train_data = lgb.Dataset(train_emb['orig'], label=train_gt)
         bst = lgb.train(self.lgb_param, train_data, self.lgb_num_rounds)
         other_bst_out = bst.predict(other_info['orig'])

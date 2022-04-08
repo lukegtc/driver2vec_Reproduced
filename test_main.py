@@ -34,7 +34,11 @@ dataset = tot_ds.dataset_generator()
 
 model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
 
-
+print(np.shape((list(dataset['highway'][0]['training']))))
+print(np.shape((list(dataset['highway'][0]['test']))))
+print(np.shape((list(dataset['highway'][0]))))
+print(np.shape(list(dataset['highway'])))
+print(np.shape(list(dataset)))
 
 #TODO: column selector
 
@@ -54,13 +58,12 @@ def do_test():
     if setting == 'test':
         # The following should be the same as for normal evaluation
         cur_step = optimizer1.total_step
-
-        predictor1.start_prediction(dataset['highway'][0]['training'])
+        predictor1.start_prediction(dataset['highway'][0]['training'], 'train')
         loader_name = 'test_lgbm'
         data_loaders = dataset['highway'][0]['test']
         # TODO: CHANGE
         
-        predictor_out = predictor1.lgbm_predict(loader_name,data_loaders,'lgbm_predict')  #Returns attributes of predictor and data_loader
+        predictor_out = predictor1.lgbm_predict(data_loaders,'test')  #Returns attributes of predictor and data_loader
         # TODO: CHANGE
         scalar_results = evaluator1.evaluate(loader_name,optimizer1,predictor_out,data_loaders)
         print(scalar_results)
@@ -73,7 +76,9 @@ if setting == 'train':
 
     while not optimizer1.completed():
         iteration = 0
+        print(iteration)
         for original, positive, negative, target, data_info in dataset['highway'][0]['training']:
+            print('TARGET: ', target.shape, target)
             # original = original.permute(0, 2, 1)
             positive = positive.reshape(1,positive.shape[0],positive.shape[1])
             original = original.permute(0, 2, 1)
@@ -121,11 +126,10 @@ if setting == 'train':
                 cur_step = optimizer1.total_step
                 #TODO: FIX
                 
-                predictor1.start_prediction(dataset['highway'][0]['training'])
+                predictor1.start_prediction(dataset['highway'][0]['training'], 'train')
                 #TODO: FIX
                 predictor_out = predictor1.lgbm_predict(
-                    dataset['highway'][0]['testing'],
-                    'lgbm_predict')
+                    dataset['highway'][0]['test'], 'test')
                 #TODO: FIX
                 eval_result = evaluator1.evaluate(
                     'test_lgbm',
