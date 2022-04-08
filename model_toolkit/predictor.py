@@ -12,9 +12,10 @@ from utils import *
 def recursive_append(target_dict, source_dict):
     for e in source_dict:
         if type(source_dict) == dict:
-            if e not in target_dict:
-                # target_dict[e] = defaultdict(list)
-                target_dict[e].append(source_dict[e])
+            # if e not in target_dict:
+            # target_dict[e] = defaultdict(list)
+            target_dict[e].append(source_dict[e])
+    # print('target: ', target_dict.keys())
     return target_dict
 
 def recursive_concat(source_dict):
@@ -136,7 +137,6 @@ class Predictor(object):
                             other_info['data_info'],
                             data_info)
                     progress_bar.update(targets.size(0))
-
                     debug_counter += 1
                     if self.fast_debug and debug_counter >= 4:
                         break
@@ -145,7 +145,8 @@ class Predictor(object):
         
         ground_truth = np.concatenate(ground_truth)
         other_info = recursive_concat(other_info)
-        print(setting, other_info)
+        # print(setting, np.shape(list(other_info)))
+        # print(setting, np.shape(list(other_info['orig'])))
 
         self.model.train()
         return outputs, ground_truth, other_info
@@ -161,9 +162,9 @@ class Predictor(object):
         other_out, other_gt, other_info = self._predict(other_loader, setting)
         train_out, train_gt, train_emb = self.train_results
         # TODO: Create a Saver that doesnt use the logger function in the og script
-        print('test lgbm_predict')
-        print(np.shape(train_emb['orig']))
-        print(train_gt.shape)
+        # print('test lgbm_predict')
+        # print(np.shape(train_emb['orig']))
+        # print(train_gt.shape)
         train_data = lgb.Dataset(train_emb['orig'], label=train_gt)
         bst = lgb.train(self.lgb_param, train_data, self.lgb_num_rounds)
         other_bst_out = bst.predict(other_info['orig'])
