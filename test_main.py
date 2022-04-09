@@ -34,15 +34,6 @@ dataset = tot_ds.dataset_generator()
 
 model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
 
-# print(np.shape((list(dataset['highway'][0]['training']))))
-# print(np.shape((list(dataset['highway'][0]['test']))))
-# print(np.shape((list(dataset['highway'][0]))))
-# print(np.shape(list(dataset['highway'])))
-# print(np.shape(list(dataset)))
-
-#TODO: column selector
-
-
 evaluator1 = Evaluator('cuda',100,1.0,'triplet',0.5 )
 
 eval_metrics = TRIPLET_EVAL_METRICS
@@ -51,7 +42,6 @@ predictor1 = Predictor(model, 'cuda', False)
 
 optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,100,10,100)
 test1 = DataLoader(dataset=training_tensor[0,:,0,:],batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers)
-
 
 def do_test():
         
