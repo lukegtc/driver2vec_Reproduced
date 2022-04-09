@@ -2,8 +2,6 @@ import pywt
 import numpy as np
 import torch
 
-
-
 def gen_wavelet(data):
     new_set = []
     for j in data:
