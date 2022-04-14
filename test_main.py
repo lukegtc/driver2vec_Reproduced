@@ -24,17 +24,26 @@ training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],e
 
 training_tensor  = dataset_split(training_tensor,20,1) #Splits any tensor into snippets spaced .20 seconds apart for 1 second intervals
 
-len_set = [32 for x in training_tensor]
+len_set = [32 for x in training_tensor] #Hard coded dataset that includes 32 snippets of data
 scoring = 0
-tot_ds = Driver_Dataset()
-dataset = tot_ds.dataset_generator()
+tot_ds = Driver_Dataset() # Initializes the total dataset 
+dataset = tot_ds.dataset_generator() #Creates the dataset
+#Initializes the model to be used to train
+model = TCN(c_in = 31,
+            wavelet = True,
+            l_in = input_length,
+            out_n = tot_drivers,
+            kernel = 7,
+            do_rate = 0.1,
+            channel_lst=len_set,
+            out_wavelet_size = 15)
 
-model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
+evaluator1 = Evaluator(triplet_margin = 1.0,
+                        triplet_weight = 0.5) #Initializes the evaluator class
 
-evaluator1 = Evaluator(triplet_margin = 1.0,triplet_weight = 0.5)
 
-
-predictor1 = Predictor(model = model, fast_debug =  False)
+predictor1 = Predictor(model = model, 
+                        fast_debug =  False) #Initializes the predictor class
 
 optimizer1 = Optimizer(model_params = model.parameters(),
                         dataset_len = 800,
@@ -44,7 +53,7 @@ optimizer1 = Optimizer(model_params = model.parameters(),
                         lr_gamma = 0.9,
                         batch_size = 100,
                         disp_steps = 10,
-                        max_epochs = 100)
+                        max_epochs = 100) #Initializes the optimizer class
 
 test1 = DataLoader(dataset=training_tensor[0,:,0,:],
                     batch_size=batch_size,
