@@ -20,3 +20,10 @@ def gen_wavelet(data):
 
 
 
+def gen_wvlt_set(orig,pos,neg):
+
+    orig_wvlt = torch.Tensor(gen_wavelet(np.array(orig, dtype=np.float32)))
+    pos_wvlt = torch.Tensor(gen_wavelet(np.array(pos, dtype=np.float32)))
+    neg_wvlt = torch.Tensor(gen_wavelet(np.array(neg, dtype=np.float32)))
+
+    return orig_wvlt, pos_wvlt, neg_wvlt

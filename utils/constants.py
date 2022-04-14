@@ -53,26 +53,3 @@ MAX_P_WAYS = 5
 
 TERRAIN_SET = ['highway','suburban','urban'] #tutroial removed
 
-
-triplet_train_metrics = [('one_hot_accuracy', ()),
-                         ('confusion_matrix', ()),
-                         ('triplet_accuracy', ()),
-                         ('triplet_ratio', ()),
-                         ('triplet_diff_weight_ratio', ()),
-                         ('tsne', ()),
-                         ('tsne_collisions', ())]
-
-
-triplet_lgbm_eval_metrics = [('one_hot_accuracy', ()),
-                             ('confusion_matrix', ()),
-
-                             ]
-
-triplet_lgbm_eval_metrics.extend([('p_way_accuracy', (p, ))
-                                  for p in range(2, MAX_P_WAYS + 1, 1)])
-TRIPLET_EVAL_METRICS = {'train': {'train': triplet_train_metrics},
-                        'eval': {'eval_lgbm': (triplet_lgbm_eval_metrics,'lgbm_predict')
-                                 },
-                        'test': {'test_lgbm': (triplet_lgbm_eval_metrics,'lgbm_predict')}
-                        }
-

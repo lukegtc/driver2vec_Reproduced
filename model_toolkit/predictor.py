@@ -12,8 +12,7 @@ from utils import *
 def recursive_append(target_dict, source_dict):
     for e in source_dict:
         if type(source_dict) == dict:
-            # if e not in target_dict:
-            # target_dict[e] = defaultdict(list)
+
             target_dict[e].append(source_dict[e])
     # print('target: ', target_dict.keys())
     return target_dict
@@ -76,10 +75,7 @@ class Predictor(object):
             orig_features = orig_features.permute(0, 2, 1)
             pos_features = pos_features.permute(0, 2, 1)
             neg_features = neg_features.permute(0, 2, 1)
-
-            orig_features = torch.Tensor(gen_wavelet(np.array(orig_features, dtype=np.float32)))
-            neg_features = torch.Tensor(gen_wavelet(np.array(neg_features, dtype=np.float32)))
-            pos_features = torch.Tensor(gen_wavelet(np.array(pos_features, dtype=np.float32)))
+            orig_features, pos_features, neg_features = gen_wvlt_set(orig_features, pos_features, neg_features)
 
             with torch.no_grad():
                 predictions, info = self.model(orig_features,
@@ -115,10 +111,7 @@ class Predictor(object):
                     orig_features = orig_features.permute(0, 2, 1)
                     pos_features = pos_features.permute(0, 2, 1)
                     neg_features = neg_features.permute(0, 2, 1)
-
-                    orig_features = torch.Tensor(gen_wavelet(np.array(orig_features, dtype=np.float32)))
-                    neg_features = torch.Tensor(gen_wavelet(np.array(neg_features, dtype=np.float32)))
-                    pos_features = torch.Tensor(gen_wavelet(np.array(pos_features, dtype=np.float32)))
+                    orig_features, pos_features, neg_features = gen_wvlt_set(orig_features, pos_features, neg_features)
 
                     with torch.no_grad():
                         predictions, info = self.model(orig_features,
@@ -145,8 +138,6 @@ class Predictor(object):
         
         ground_truth = np.concatenate(ground_truth)
         other_info = recursive_concat(other_info)
-        # print(setting, np.shape(list(other_info)))
-        # print(setting, np.shape(list(other_info['orig'])))
 
         self.model.train()
         return outputs, ground_truth, other_info
@@ -161,10 +152,7 @@ class Predictor(object):
     def lgbm_predict(self, other_loader, setting):
         other_out, other_gt, other_info = self._predict(other_loader, setting)
         train_out, train_gt, train_emb = self.train_results
-        # TODO: Create a Saver that doesnt use the logger function in the og script
-        # print('test lgbm_predict')
-        # print(np.shape(train_emb['orig']))
-        # print(train_gt.shape)
+
         train_data = lgb.Dataset(train_emb['orig'], label=train_gt)
         bst = lgb.train(self.lgb_param, train_data, self.lgb_num_rounds)
         other_bst_out = bst.predict(other_info['orig'])

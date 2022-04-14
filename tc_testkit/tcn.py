@@ -42,12 +42,11 @@ class TemporalBlock(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        # torch.nn.init.xavier_uniform_(self.conv1.weight)
-        # torch.nn.init.xavier_uniform_(self.conv2.weight)
+
         torch.nn.init.kaiming_uniform_(self.conv1.weight)
         torch.nn.init.kaiming_uniform_(self.conv2.weight)
         if self.downsample is not None:
-            # torch.nn.init.xavier_uniform(self.downsample.weight)
+
             torch.nn.init.kaiming_uniform_(self.downsample.weight)
             
 

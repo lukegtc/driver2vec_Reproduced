@@ -2,11 +2,8 @@ import torch
 from torch import nn
 import numpy as np
 from torch.utils.data import DataLoader
-
-
 from data_toolkit import *
 from model_toolkit import *
-# from tcn_toolkit import *
 from utils import *
 from tc_testkit import *
 from model_toolkit import *
@@ -36,7 +33,6 @@ model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers,
 
 evaluator1 = Evaluator('cuda',100,1.0,'triplet',0.5 )
 
-eval_metrics = TRIPLET_EVAL_METRICS
 
 predictor1 = Predictor(model, 'cuda', False)
 
@@ -76,11 +72,8 @@ if setting == 'train':
 
             positive = positive.permute(0,2,1)
             negative = negative.permute(0,2,1)
+            original, positive, negative = gen_wvlt_set(original, positive, negative)
 
-            original = torch.Tensor(gen_wavelet(np.array(original,dtype=np.float32)))
-            negative = torch.Tensor(gen_wavelet(np.array(negative,dtype=np.float32)))
-            positive = torch.Tensor(gen_wavelet(np.array(positive,dtype=np.float32)))
-            
 
             original = original.to(device)
             target = target.to(device)
@@ -93,7 +86,7 @@ if setting == 'train':
                                     'ground_truth': target,
                                     'other_info': other_info}
 
-                eval_result = evaluator1.evaluate('train', optimizer1, info_to_evaluate) #,eval_metrics['train']['train']
+                eval_result = evaluator1.evaluate('train', optimizer1, info_to_evaluate)
                 scalar_results = eval_result
   
 
