@@ -16,7 +16,19 @@ from utils import *
 class Optimizer():
 
     def __init__(self, model_params, dataset_len,learning_rate,weight_decay,lr_step_epoch,lr_gamma,batch_size,disp_steps,max_epochs):
-
+        """
+        Args:
+            model_params (Parameters): Dictionary of parameters required for the Adam Optimizer
+            dataset_len (int): Length of the total dataset
+            learning_rate (float): Value that sets the learning rate
+            weight_decay (float): Value that sets the decay of the weights for the Adam Optimizer
+            lr_step_epoch (int): Important for the step size scheduler within the learning rate function. Adjusts the length of lr decay
+            lr_gamma (float): Value that is a multiplier of the lr decay
+            batch_size (int): Length of a single batch.
+            disp_steps (int): Current step of the epoch.
+            max_epochs (int): Total number of epochs
+    
+        """
         
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
@@ -48,6 +60,12 @@ class Optimizer():
         self.train_time = []
 
     def generate_state_dict(self):
+        """
+        Creates the dictionary that holds all the states
+        Returns:
+            state_dict (dict[int]): Dictionary containing important values to be carried over into
+                                    future epochs.
+        """
         # TODO handle LR scheduler
         state_dict = {}
         state_dict['optimizer_state_dict'] = self.optimizer.state_dict()
@@ -59,6 +77,15 @@ class Optimizer():
         return state_dict
 
     def load_state_dict(self, state_dict, learning_rate,lr_gamma,lr_step_epoch):
+        """
+        Initializes the values taken from the state dictionary and assigns them within the class
+        Args:
+                state_dict (dict[int]): See function generate_state_dict
+                learning_rate (float): Learning rate for the optimizer
+                lr_gamma (float): Value that is a multiplier of the lr decay
+                lr_step_epoch (int): Important for the step size scheduler within the learning rate function. Adjusts the length of lr decay
+
+        """
         # For restarting at new learning rate
         self.optimizer.load_state_dict(state_dict['optimizer_state_dict'])
         print(f'Setting new learning rate to {self.learning_rate}')

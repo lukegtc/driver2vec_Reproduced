@@ -1,5 +1,6 @@
 NUM_DRIVERS = 5
 
+MAX_P_WAYS = 5
 
 CHANNELS=["ACCELERATION", "ACCELERATION_PEDAL", "ACCELERATION_Y",
               "ACCELERATION_Z", "BRAKE_PEDAL", "CLUTCH_PEDAL", "CURVE_RADIUS",
@@ -17,7 +18,7 @@ CHANNELS=["ACCELERATION", "ACCELERATION_PEDAL", "ACCELERATION_Y",
               "SPEED_LIMIT", "SPEED_NEXT_VEHICLE", "SPEED_Y",
               "SPEED_Z", "STEERING_WHEEL"]
 
-# Map group to list of columns
+
 CHANNEL_GROUPS = {
                 "acceleration":["ACCELERATION",
                                 "ACCELERATION_PEDAL",
@@ -49,7 +50,7 @@ CHANNEL_GROUPS = {
                         }
 
 
-MAX_P_WAYS = 5
+
 
 TERRAIN_SET = ['highway','suburban','urban'] #tutroial removed
 

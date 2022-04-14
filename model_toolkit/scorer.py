@@ -22,7 +22,17 @@ def cash_to_tensor(tensor):
         return torch.Tensor(tensor)
     return tensor
 # https://github.com/adambielski/siamese-triplet/blob/master/losses.py
-def loss_triplet_wrapper(loss_inputs):
+def triplet_loss(loss_inputs):
+
+    """
+    Calculates the triplet loss values of a given set of drivers
+    Args:
+        loss_inputs (dict): Contains the ground truth, original, positive and negative driver
+                            samples for the loss function
+    Returns:
+        losses (tensor): a matrix of loss values
+    """
+
     # Verify triplet loss
     margin = loss_inputs['triplet_margin']
     weight = loss_inputs['triplet_weight']
@@ -36,10 +46,6 @@ def loss_triplet_wrapper(loss_inputs):
     loss_embedd = orig.norm(2) + pos.norm(2) + neg.norm(2)
     print(f'Triplet embedding magnitude loss {loss_embedd}')
 
-    # Check current driver
-    # for i in np.arange(5):
-    #     if sum(target[:,i]) == 1.0:
-    #         idx = i
     idx = target.tolist().index(1)
     orig = torch.reshape(orig[idx,:], (1,62))
     loss_set = []
@@ -56,27 +62,32 @@ def loss_triplet_wrapper(loss_inputs):
 pool = multiprocessing.Pool(4)
 # We might want multi-target stuff
 class Evaluator():
-    def __init__(self, device,heavy_log_steps,triplet_margin,loss_fn_name,triplet_weight ):
+    def __init__(self,triplet_margin,triplet_weight ):
+        """
+        Args:
+            triplet_margin (float): Triplet loss function margin value
+            triplet_weight (float): Weighting values for the triplet loss functions
+        """
 
-        self.device = device
-        self.heavy_log_steps = heavy_log_steps
-    
         # margin for triplet loss
         self.triplet_margin = triplet_margin
-        self.define_loss(loss_fn_name)
+
         self.triplet_weight = triplet_weight
 
     # Loss related specifications
-    def define_loss(self, loss_fn_name):
-        if loss_fn_name == 'triplet':
-            self.loss_fn = loss_triplet_wrapper
-        # elif loss_fn_name == 'cross_entropy':
-        #     self.loss_fn = loss_cross_entropy_wrapper
-        else:
-            raise NotImplementedError(
-                f'Loss function {loss_fn_name} not implemented.')
+
+        self.loss_fn = triplet_loss
 
     def loss_backward(self, model, clipping_value):
+
+        """
+
+        Conducts a backward pass of a loss function
+        Args:
+            model: Model that is being used to predict the values
+            clipping_values (float): Point where the backward pass is told to stop
+        """
+
         self.loss.backward()
         
         gradients = []
@@ -90,10 +101,7 @@ class Evaluator():
         gradient_norm = np.linalg.norm(np.concatenate(gradients, axis=0))
         weight_norm = np.linalg.norm(np.concatenate(weights, axis=0))
 
-        # Some arbitrary limit but gradient should not be this big anyways
-        # Basically, skip this step if gradient is crazy. This avoids
-        # seeing NaN in model
-        # Maybe add NaN check?
+
         if (gradient_norm > 50 * clipping_value or
             np.isnan(gradient_norm)):
             large_gradient = True

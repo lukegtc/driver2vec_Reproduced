@@ -31,13 +31,25 @@ dataset = tot_ds.dataset_generator()
 
 model = TCN(c_in = 31,wavelet = True, l_in = input_length,  out_n = tot_drivers, kernel = 7, do_rate = 0.1, channel_lst=len_set, out_wavelet_size = 15)
 
-evaluator1 = Evaluator('cuda',100,1.0,'triplet',0.5 )
+evaluator1 = Evaluator(triplet_margin = 1.0,triplet_weight = 0.5)
 
 
-predictor1 = Predictor(model, 'cuda', False)
+predictor1 = Predictor(model = model, fast_debug =  False)
 
-optimizer1 = Optimizer(model.parameters(),800,0.0001,0.00001,4,0.9,100,10,100)
-test1 = DataLoader(dataset=training_tensor[0,:,0,:],batch_size=batch_size,shuffle = (setting == 'train'), num_workers = workers)
+optimizer1 = Optimizer(model_params = model.parameters(),
+                        dataset_len = 800,
+                        learning_rate = 0.0001,
+                        weight_decay = 0.00001,
+                        lr_step_epoch = 4,
+                        lr_gamma = 0.9,
+                        batch_size = 100,
+                        disp_steps = 10,
+                        max_epochs = 100)
+
+test1 = DataLoader(dataset=training_tensor[0,:,0,:],
+                    batch_size=batch_size,
+                    shuffle = (setting == 'train'),
+                    num_workers = workers)
 
 def do_test():
         
@@ -47,10 +59,9 @@ def do_test():
         predictor1.start_prediction(dataset['highway'][0]['training'], 'train')
         loader_name = 'test_lgbm'
         data_loaders = dataset['highway'][0]['test']
-        # TODO: CHANGE
-        
+
         predictor_out = predictor1.lgbm_predict(data_loaders,'test')  #Returns attributes of predictor and data_loader
-        # TODO: CHANGE
+
         scalar_results = evaluator1.evaluate(loader_name,optimizer1,predictor_out)
 
         print(scalar_results)
@@ -66,7 +77,7 @@ if setting == 'train':
         print(iteration)
         for original, positive, negative, target, data_info in dataset['highway'][0]['training']:
             print('TARGET: ', target.shape, target)
-            # original = original.permute(0, 2, 1)
+
             positive = positive.reshape(1,positive.shape[0],positive.shape[1])
             original = original.permute(0, 2, 1)
 
@@ -108,13 +119,13 @@ if setting == 'train':
             if (fast_debug or optimizer1.total_step == 50 or(do_eval and optimizer1.total_step % eval_steps == 0)):
 
                 cur_step = optimizer1.total_step
-                #TODO: FIX
-                
-                predictor1.start_prediction(dataset['highway'][0]['training'], 'train')
-                #TODO: FIX
+
+                predictor1.start_prediction(
+                    dataset['highway'][0]['training'], 'train')
+  
                 predictor_out = predictor1.lgbm_predict(
                     dataset['highway'][0]['test'], 'test')
-                #TODO: FIX
+
                 eval_result = evaluator1.evaluate(
                     'test_lgbm',
                     optimizer1,

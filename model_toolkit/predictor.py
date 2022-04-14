@@ -1,15 +1,19 @@
 import torch
 import numpy as np
 from collections import defaultdict
-
 from tqdm import tqdm
 import lightgbm as lgb
 from utils import *
 
-# from constants import NUM_DRIVERS
-
-
 def recursive_append(target_dict, source_dict):
+    """
+    Uses recursion to add values from one dictionary into another dictionary.
+    Args:
+        target_dict (dict): Dictionary that is being appended.
+        source_dict (dict): Dictionary from which the values are taken and appended to the target
+    Returns:
+        target_dict (dict): Newly appended target dictionary
+    """
     for e in source_dict:
         if type(source_dict) == dict:
 
@@ -18,6 +22,13 @@ def recursive_append(target_dict, source_dict):
     return target_dict
 
 def recursive_concat(source_dict):
+    """
+    Uses concatenation to combine values in a dictionar on a per term basis.
+    Args:
+        source_dict (dict): Dictionary where the values are taken and concatenated
+    Returns:
+        source_dict (dict): Newly concatenated source dictionary
+    """
     for e in source_dict:
         if type(source_dict[e]) == dict or type(source_dict[e]) == defaultdict:
             source_dict[e] = recursive_concat(source_dict[e])
@@ -30,9 +41,17 @@ def recursive_concat(source_dict):
 class Predictor(object):
     """Predictor class for a single model."""
 
-    def __init__(self, model, device, fast_debug):
+    def __init__(self, model, fast_debug):
+
+        """
+            Args:
+                model: Model that is being used to train the network
+                fast_debug (bool): Determines whether an expedited loop is to be used to check
+                                    for bugs. The loop ends after 4 rounds. This is hard coded.
+           
+        """
         self.model = model
-        self.device = device
+       
         self.fast_debug = fast_debug
         # self.logger = unique_log_val
         self.num_drivers = 5
@@ -59,7 +78,18 @@ class Predictor(object):
                           "feature_fraction_seed":341,}
         self.lgb_num_rounds = 15
 
-    def _predict(self, loader, setting, ratio=1, need_triplet_emb=True):
+    def _predict(self, loader, setting, ratio=1):
+        """
+        Runs through the prediction cycle
+        Args:
+            loader (tensor): Data that was previously initialized to be able to be interpreted by the predictor
+            setting (str): Determines whether to run the train scenario or the test scenario
+            ratio (float): Determines when to update the progress bar
+        Returns:
+                outputs (tensor): Tensor containing the predicted values of the model.
+                ground_truth (tensor): Tensor containing the solutions that the predictor is trying to predict
+                other_info (dict): Dictionary containing important values to be passed to future epochs.
+        """
         
         self.model.eval()
 
