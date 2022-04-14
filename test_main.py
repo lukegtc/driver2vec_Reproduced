@@ -18,6 +18,8 @@ eval_steps = 400
 fast_debug = False
 clipping_value = 1.0
 batch_size = 36  #384
+losses = []
+epochs = []
 setting = 'test' #train or test
 training_tensor, eval_tensor, testing_tensor = Data_Processing.dataset_open('highway', add_noise=False, noise_variance=0.1)
 training_tensor,eval_tensor,testing_tensor = training_tensor[:tot_drivers,:,:],eval_tensor[:tot_drivers,:,:],testing_tensor[:tot_drivers,:,:]
@@ -147,7 +149,22 @@ if setting == 'train':
                                 optimizer1.total_step)
 
                 do_test()
-
+        print(scalar_results['train:loss'].detach().numpy())
+        print(optimizer1.cur_epoch)
+        losses.append(scalar_results['train:loss'].detach().numpy())
+        epochs.append(optimizer1.cur_epoch)
+        print(epochs)
+        print(losses)
         optimizer1.end_epoch()
+    print(epochs)
+    print(losses)
+    plt.plot(epochs, losses)
+    plt.ylabel('Loss [-]', fontsize=16)
+    plt.xlabel('Epoch [-]', fontsize=16)
+    plt.title('Training loss', fontsize=28)
+
 else:
     print('Training skipped.')
+
+# Plot loss function
+plt.show
