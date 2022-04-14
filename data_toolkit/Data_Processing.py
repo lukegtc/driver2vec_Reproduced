@@ -22,6 +22,21 @@ def dataset_open( terrain,
                   pct_training=0.8,
                   variables = [],
                   always_remove = ['FOG','FOG_LIGHTS','FRONT_WIPERS','HEAD_LIGHTS','RAIN','REAR_WIPERS','SNOW']):
+
+    """
+    Function that opens the specified terrain dataset
+    Args:
+        terrain (str): Type of terrain selected.
+        add_noise (bool): Determines whether or not to add noise ot the data set.
+        noise_variance (float): Variable that increases or decreases the added noise.
+        pct_training (float): Percentage of the total dataset that is used for training.
+        variables (list[str]): List of columns that need to be removed. Useful for the ablation process.
+        always_remove(list[str]): List of columns that are not useful for the reproduction.
+    Returns:
+        training_tensor (tensor[float]): The selection of data used to train the model. 
+        eval_tensor (tensor[float]): The selection of data used to evaluate the model.
+        test_tensor (tensor[float]): The selection of data used to test the model.
+    """
     if terrain not in TERRAIN_SET:
         print("Incorrect Terrain Selected")
     else:
@@ -74,7 +89,14 @@ def dataset_open( terrain,
         return train_tensor, eval_tensor, test_tensor
 
 def dataset_split(dataset,interval,t_len):
-    
+    """
+    Args:
+        dataset (tensor[float]): Tensor that contains the data that must be split up into intervals
+        interval (int): Number of datapoints that each sample interval is shifted by.
+        t_len (float): Number of seconds the sample interval is long.
+    Returns:
+        A tensor of a split dataset of time series.
+    """
     dataset = dataset.numpy()
     # print(dataset.shape)
     #interval is the amount of time between the starting points of each sample
@@ -102,6 +124,9 @@ def dataset_split(dataset,interval,t_len):
 
 
 class Driver_Dataset():
+    """
+    Class that initializes the dataset to be interpreted by the model
+    """
     def __init__(self,interval = 20,t_len = 1):
         # super(Driver_Dataset, self).__init__()
           #Tensor
@@ -112,6 +137,12 @@ class Driver_Dataset():
 
 
     def dataset_generator(self):
+        """
+            Returns:
+                terrain_set (dict[float]): A dictionary containing dictionaries for the training, eval and test sets.
+                                           Each of these dictionaries contains required info to be passe don during their
+                                           respective phases in teh model.
+        """
         terrain_set = {}
         for j in TERRAIN_SET:
                 driver_set = {}
